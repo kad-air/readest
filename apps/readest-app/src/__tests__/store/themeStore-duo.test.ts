@@ -13,3 +13,13 @@ describe('themeStore iPhone Duo flag', () => {
     expect(useThemeStore.getState().isIPhoneDuo).toBe(false);
   });
 });
+
+describe('themeStore insets refresh request', () => {
+  it('starts at 0 and counts each request', () => {
+    const start = useThemeStore.getState().insetsRefreshToken;
+    expect(start).toBe(0);
+    useThemeStore.getState().requestInsetsRefresh();
+    useThemeStore.getState().requestInsetsRefresh();
+    expect(useThemeStore.getState().insetsRefreshToken).toBe(start + 2);
+  });
+});

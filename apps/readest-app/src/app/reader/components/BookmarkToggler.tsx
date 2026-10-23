@@ -14,6 +14,9 @@ import { eventDispatcher } from '@/utils/event';
 import { isCfiInLocation } from '@/utils/cfi';
 import { nextBooknoteStamp } from '@/utils/booknoteStamp';
 import { useResponsiveSize } from '@/hooks/useResponsiveSize';
+import { useNativeBarsActive } from '@/hooks/useNativeBar';
+import { useNativeBarSlice } from '@/store/nativeBarStore';
+import { NATIVE_BAR_SYMBOLS } from '@/utils/nativeBar';
 
 interface BookmarkTogglerProps {
   bookKey: string;
@@ -109,6 +112,24 @@ const BookmarkToggler: React.FC<BookmarkTogglerProps> = ({ bookKey }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, progress]);
 
+  // On the Duo the button lives in the native bar; the effects above keep running.
+  const nativeBarsActive = useNativeBarsActive();
+  const label = isBookmarked ? _('Remove Bookmark') : _('Add Bookmark');
+  useNativeBarSlice(`${bookKey}:bookmark`, 2, [
+    {
+      id: 'bookmark',
+      title: label,
+      symbol: isBookmarked
+        ? NATIVE_BAR_SYMBOLS['bookmarkFilled']!
+        : NATIVE_BAR_SYMBOLS['bookmark']!,
+      placement: 'leading',
+      selected: isBookmarked,
+      onTap: toggleBookmark,
+    },
+  ]);
+
+  if (nativeBarsActive) return null;
+
   return (
     <Button
       icon={
@@ -119,7 +140,7 @@ const BookmarkToggler: React.FC<BookmarkTogglerProps> = ({ bookKey }) => {
         )
       }
       onClick={toggleBookmark}
-      label={isBookmarked ? _('Remove Bookmark') : _('Add Bookmark')}
+      label={label}
     ></Button>
   );
 };

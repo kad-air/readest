@@ -6,6 +6,9 @@ import { useReaderStore } from '@/store/readerStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useBookDataStore } from '@/store/bookDataStore';
 import { useResponsiveSize } from '@/hooks/useResponsiveSize';
+import { useNativeBarsActive } from '@/hooks/useNativeBar';
+import { useNativeBarSlice } from '@/store/nativeBarStore';
+import { NATIVE_BAR_SYMBOLS } from '@/utils/nativeBar';
 import { saveViewSettings } from '@/helpers/settings';
 import { isTranslationAvailable } from '@/services/translators/utils';
 import Button from '@/components/Button';
@@ -42,6 +45,28 @@ const TranslationToggler = ({ bookKey }: { bookKey: string }) => {
     );
   }, [bookData, viewSettings.translationEnabled, viewSettings.translateTargetLang]);
 
+  // On the Duo the button lives in the native bar, left out where it would be disabled.
+  const nativeBarsActive = useNativeBarsActive();
+  const disabled = !translationAvailable && !translationEnabled;
+  useNativeBarSlice(
+    `${bookKey}:translation`,
+    3,
+    disabled
+      ? null
+      : [
+          {
+            id: 'translation',
+            title: _('Toggle Translation'),
+            symbol: NATIVE_BAR_SYMBOLS['translation']!,
+            placement: 'leading',
+            selected: !!translationEnabled,
+            onTap: () => setTranslationEnabled(!translationEnabled),
+          },
+        ],
+  );
+
+  if (nativeBarsActive) return null;
+
   return (
     <Button
       icon={
@@ -51,7 +76,7 @@ const TranslationToggler = ({ bookKey }: { bookKey: string }) => {
         />
       }
       aria-label={_('Toggle Translation')}
-      disabled={!translationAvailable && !translationEnabled}
+      disabled={disabled}
       onClick={() => setTranslationEnabled(!translationEnabled)}
       label={
         translationAvailable

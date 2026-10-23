@@ -72,6 +72,9 @@ interface ThemeState {
   // Safe-area insets of the content view, larger than the window's while a
   // native bar is present on the Duo; null when the bridge does not report them.
   contentInsets: { top: number; bottom: number } | null;
+  // Bumped when a native bar appears or goes: the window's and the content
+  // view's insets change with it, so the Duo refetches them (useSafeAreaInsets).
+  insetsRefreshToken: number;
   isRoundedWindow: boolean;
   setSystemUIAlwaysHidden: (hidden: boolean) => void;
   setStatusBarHeight: (height: number) => void;
@@ -99,6 +102,7 @@ interface ThemeState {
   updateScreenCornerRadius: (radius: number) => void;
   setIsIPhoneDuo: (isIPhoneDuo: boolean) => void;
   updateContentInsets: (insets: { top: number; bottom: number } | null) => void;
+  requestInsetsRefresh: () => void;
 }
 
 const LIBRARY_THEME_MODE_KEY = 'libraryThemeMode';
@@ -316,6 +320,7 @@ export const useThemeStore = create<ThemeState>((set, get) => {
     screenCornerRadius: 0,
     isIPhoneDuo: false,
     contentInsets: null,
+    insetsRefreshToken: 0,
     isRoundedWindow: true,
     showSystemUI: () => set({ systemUIVisible: true }),
     dismissSystemUI: () => set({ systemUIVisible: false }),
@@ -454,6 +459,8 @@ export const useThemeStore = create<ThemeState>((set, get) => {
       if (prev?.top === insets?.top && prev?.bottom === insets?.bottom) return;
       set({ contentInsets: insets });
     },
+    requestInsetsRefresh: () =>
+      set((state) => ({ insetsRefreshToken: state.insetsRefreshToken + 1 })),
   };
 });
 

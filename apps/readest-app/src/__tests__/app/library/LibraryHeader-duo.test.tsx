@@ -26,6 +26,7 @@ const theme = {
   statusBarHeight: 0,
   safeAreaInsets: { top: 0, right: 0, bottom: 0, left: 0 },
   isIPhoneDuo: true,
+  requestInsetsRefresh: vi.fn(),
 };
 vi.mock('@/store/themeStore', () => ({
   useThemeStore: (selector?: (s: typeof theme) => unknown) => (selector ? selector(theme) : theme),

@@ -10,6 +10,9 @@ import { useReaderStore } from '@/store/readerStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useSidebarStore } from '@/store/sidebarStore';
 import { useResponsiveSize } from '@/hooks/useResponsiveSize';
+import { useNativeBarsActive } from '@/hooks/useNativeBar';
+import { useNativeBarSlice } from '@/store/nativeBarStore';
+import { NATIVE_BAR_SYMBOLS, NativeBarSpecItem } from '@/utils/nativeBar';
 import Button from '@/components/Button';
 import { Insets } from '@/types/misc';
 
@@ -41,6 +44,27 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
   const tocIconSize = useResponsiveSize(23);
   const fontIconSize = useResponsiveSize(18);
   const navPadding = isMobile ? `${gridInsets.bottom * 0.33 + 16}px` : '0px';
+
+  // On the Duo the five tab buttons live in the native bar; the HTML row is gone.
+  const nativeBarsActive = useNativeBarsActive();
+  const showToc = !(isSideBarVisible && isSideBarPinned);
+  const tab = (id: string, title: string, selected: boolean): NativeBarSpecItem => ({
+    id,
+    title,
+    symbol: NATIVE_BAR_SYMBOLS[id]!,
+    placement: 'bottom',
+    selected,
+    onTap: () => onSetActionTab(id),
+  });
+  useNativeBarSlice(`${bookKey}:footer`, 20, [
+    ...(showToc ? [tab('toc', _('Table of Contents'), actionTab === 'toc')] : []),
+    tab('color', _('Color'), actionTab === 'color'),
+    tab('progress', _('Reading Progress'), actionTab === 'progress'),
+    tab('font', _('Font & Layout'), actionTab === 'font'),
+    tab('tts', _('Speak'), !!viewState?.ttsEnabled),
+  ]);
+
+  if (nativeBarsActive) return null;
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { useEnv } from '@/context/EnvContext';
 import { useThemeStore } from '@/store/themeStore';
@@ -15,6 +15,7 @@ export const useSafeAreaInsets = () => {
     setIsIPhoneDuo,
     recordStatusBarHiddenInsets,
     updateContentInsets,
+    insetsRefreshToken,
   } = useThemeStore();
 
   const updateInsets = (insets: Insets) => {
@@ -87,6 +88,15 @@ export const useSafeAreaInsets = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appService]);
+
+  // A native bar appearing or going changes the insets without any window event.
+  // Only the Duo has native bars, so no other device refetches.
+  const refreshTokenRef = useRef(insetsRefreshToken);
+  useEffect(() => {
+    if (refreshTokenRef.current === insetsRefreshToken) return;
+    refreshTokenRef.current = insetsRefreshToken;
+    if (useThemeStore.getState().isIPhoneDuo) onUpdateInsets();
+  }, [insetsRefreshToken, onUpdateInsets]);
 
   useEffect(() => {
     onUpdateInsets();

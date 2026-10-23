@@ -7,6 +7,9 @@ import { useSidebarStore } from '@/store/sidebarStore';
 import { useNotebookStore } from '@/store/notebookStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useResponsiveSize } from '@/hooks/useResponsiveSize';
+import { useNativeBarsActive } from '@/hooks/useNativeBar';
+import { useNativeBarSlice } from '@/store/nativeBarStore';
+import { NATIVE_BAR_SYMBOLS } from '@/utils/nativeBar';
 import Button from '@/components/Button';
 
 interface NotebookTogglerProps {
@@ -32,6 +35,22 @@ const NotebookToggler: React.FC<NotebookTogglerProps> = ({ bookKey }) => {
       if (!isNotebookVisible) toggleNotebook();
     }
   };
+
+  // On the Duo the button lives in the native bar.
+  const nativeBarsActive = useNativeBarsActive();
+  useNativeBarSlice(`${bookKey}:notebook`, 10, [
+    {
+      id: 'notebook',
+      title: _('Notebook'),
+      symbol: NATIVE_BAR_SYMBOLS['notebook']!,
+      placement: 'trailing',
+      selected: sideBarBookKey === bookKey && isNotebookVisible,
+      onTap: handleToggleSidebar,
+    },
+  ]);
+
+  if (nativeBarsActive) return null;
+
   return (
     <Button
       icon={

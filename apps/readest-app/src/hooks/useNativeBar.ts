@@ -9,10 +9,11 @@ import {
   toNativeBarItems,
 } from '@/utils/nativeBar';
 
-const sendItems = (items: NativeBarItem[]) => {
+const sendItems = (items: NativeBarItem[], onSent: () => void) => {
   setNativeBarItems(items)
     .then((result) => {
       if (!result.success) console.error('native bar: set_bar_items failed', result);
+      else onSent();
     })
     .catch((error) => console.error('native bar: set_bar_items threw', error));
 };
@@ -41,6 +42,9 @@ export const useNativeBarsActive = (): boolean => {
  */
 export const useNativeBar = (spec: NativeBarSpec | null): void => {
   const active = useNativeBarsActive();
+  // The bridge lays the bars out before it resolves, so the insets are final by
+  // then; a native bar appearing or going moves the window's and content view's.
+  const requestInsetsRefresh = useThemeStore((s) => s.requestInsetsRefresh);
 
   const specRef = useRef<NativeBarSpec | null>(spec);
   const sentRef = useRef<NativeBarItem[]>([]);
@@ -51,16 +55,16 @@ export const useNativeBar = (spec: NativeBarSpec | null): void => {
     const next = active && spec ? toNativeBarItems(spec) : [];
     if (nativeBarItemsEqual(next, sentRef.current)) return;
     sentRef.current = next;
-    sendItems(next);
+    sendItems(next, requestInsetsRefresh);
   });
 
   useEffect(() => {
     return () => {
       if (sentRef.current.length === 0) return;
       sentRef.current = [];
-      sendItems([]);
+      sendItems([], requestInsetsRefresh);
     };
-  }, []);
+  }, [requestInsetsRefresh]);
 
   useEffect(() => {
     if (!active) return;

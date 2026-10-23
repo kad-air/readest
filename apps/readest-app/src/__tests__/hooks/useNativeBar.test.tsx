@@ -4,7 +4,11 @@ import type { NativeBarSpec } from '@/utils/nativeBar';
 
 const h = vi.hoisted(() => ({
   appService: { isIOSApp: true } as { isIOSApp: boolean } | null,
-  theme: { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false },
+  theme: { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false } as Record<
+    string,
+    unknown
+  >,
+  requestInsetsRefresh: vi.fn(),
   setItems: vi.fn(),
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
@@ -13,7 +17,8 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/context/EnvContext', () => ({ useEnv: () => ({ appService: h.appService }) }));
 vi.mock('@/store/themeStore', () => ({
-  useThemeStore: (selector: (s: typeof h.theme) => unknown) => selector(h.theme),
+  useThemeStore: (selector: (s: typeof h.theme) => unknown) =>
+    selector({ ...h.theme, requestInsetsRefresh: h.requestInsetsRefresh }),
 }));
 vi.mock('@/utils/bridge', () => ({
   setNativeBarItems: h.setItems,
@@ -25,6 +30,7 @@ import { useNativeBar } from '@/hooks/useNativeBar';
 beforeEach(() => {
   h.appService = { isIOSApp: true };
   h.theme = { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false };
+  h.requestInsetsRefresh.mockReset();
   h.setItems.mockReset();
   h.setItems.mockResolvedValue({ success: true });
   h.subscribe.mockReset();
@@ -187,5 +193,35 @@ describe('useNativeBar parity off the Duo', () => {
     unmount();
     expect(h.setItems).not.toHaveBeenCalled();
     expect(h.subscribe).not.toHaveBeenCalled();
+  });
+});
+
+describe('useNativeBar insets refresh', () => {
+  it('asks for an insets refresh after each accepted send', async () => {
+    renderHook(() => useNativeBar(makeSpec()));
+    await waitFor(() => expect(h.requestInsetsRefresh).toHaveBeenCalledTimes(1));
+  });
+
+  it('asks again after the clear on unmount', async () => {
+    const { unmount } = renderHook(() => useNativeBar(makeSpec()));
+    await waitFor(() => expect(h.requestInsetsRefresh).toHaveBeenCalledTimes(1));
+    unmount();
+    await waitFor(() => expect(h.requestInsetsRefresh).toHaveBeenCalledTimes(2));
+  });
+
+  it('does not ask after a failed send', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    h.setItems.mockResolvedValue({ success: false, error: 'nope' });
+    renderHook(() => useNativeBar(makeSpec()));
+    await waitFor(() => expect(error).toHaveBeenCalled());
+    expect(h.requestInsetsRefresh).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  it('never asks off the Duo', () => {
+    h.theme = { ...h.theme, isIPhoneDuo: false };
+    const { unmount } = renderHook(() => useNativeBar(makeSpec()));
+    unmount();
+    expect(h.requestInsetsRefresh).not.toHaveBeenCalled();
   });
 });

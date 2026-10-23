@@ -24,7 +24,10 @@ import { getHeaderTriggerHeight, getHorizontalInsetStyle } from '@/utils/insets'
 import { getBookDataAttributes } from '@/utils/book';
 import { isForcedMobileLayout } from '../utils/mobileLayout';
 import { HighlighterIcon } from '@/components/HighlighterIcon';
-import Dropdown from '@/components/Dropdown';
+import Dropdown, { DropdownHandle } from '@/components/Dropdown';
+import { useNativeBarsActive } from '@/hooks/useNativeBar';
+import { useNativeBarSlice } from '@/store/nativeBarStore';
+import { NATIVE_BAR_SYMBOLS } from '@/utils/nativeBar';
 import ModalPortal from '@/components/ModalPortal';
 import WindowButtons from '@/components/WindowButtons';
 import QuickActionMenu from './annotator/QuickActionMenu';
@@ -34,6 +37,10 @@ import NotebookToggler from './NotebookToggler';
 import TranslationToggler from './TranslationToggler';
 import ViewMenu from './ViewMenu';
 import SyncInfoDialog from './SyncInfoDialog';
+
+// The HTML toggle of a dropdown whose button lives in the Duo's native bar: the
+// dropdown stays mounted so its menu opens in place, but the toggle takes no room.
+const NATIVE_BAR_HIDDEN_TOGGLE = 'invisible absolute h-0 w-0 min-h-0 overflow-hidden p-0';
 
 interface HeaderBarProps {
   bookKey: string;
@@ -104,6 +111,50 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   const highlightStyle = settings.globalReadSettings.highlightStyle;
   const highlightColor = settings.globalReadSettings.highlightStyles[highlightStyle];
   const highlightHexColor = getHighlightColorHex(settings, highlightColor);
+
+  // On the Duo these buttons live in the native bar; the dropdowns stay mounted
+  // so a native tap opens the same menu.
+  const nativeBarsActive = useNativeBarsActive();
+  const quickActionRef = useRef<DropdownHandle>(null);
+  const viewOptionsRef = useRef<DropdownHandle>(null);
+  const quickActionLabel = annotationQuickAction
+    ? _('Disable Quick Action')
+    : _('Enable Quick Action on Selection');
+  useNativeBarSlice(`${bookKey}:library`, 0, [
+    {
+      id: 'library',
+      title: _('Go to Library'),
+      symbol: NATIVE_BAR_SYMBOLS['library']!,
+      placement: 'leading',
+      priority: 'high',
+      onTap: onGoToLibrary,
+    },
+  ]);
+  useNativeBarSlice(
+    `${bookKey}:quickAction`,
+    4,
+    enableAnnotationQuickActions
+      ? [
+          {
+            id: 'quickAction',
+            title: quickActionLabel,
+            symbol: NATIVE_BAR_SYMBOLS['quickAction']!,
+            placement: 'leading',
+            selected: !!annotationQuickAction,
+            onTap: () => quickActionRef.current?.open(),
+          },
+        ]
+      : null,
+  );
+  useNativeBarSlice(`${bookKey}:viewOptions`, 11, [
+    {
+      id: 'viewOptions',
+      title: _('View Options'),
+      symbol: NATIVE_BAR_SYMBOLS['viewOptions']!,
+      placement: 'trailing',
+      onTap: () => viewOptionsRef.current?.open(),
+    },
+  ]);
 
   const handleToggleDropdown = (isOpen: boolean) => {
     setIsDropdownOpen(isOpen);
@@ -269,29 +320,32 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                 <SidebarToggler bookKey={bookKey} />
               </div>
             )}
-            <button
-              title={_('Go to Library')}
-              className='btn btn-ghost hidden h-8 min-h-8 w-8 p-0 sm:flex'
-              onClick={onGoToLibrary}
-            >
-              <VscLibrary size={iconSize18} className='fill-base-content' />
-            </button>
+            {!nativeBarsActive && (
+              <button
+                title={_('Go to Library')}
+                className='btn btn-ghost hidden h-8 min-h-8 w-8 p-0 sm:flex'
+                onClick={onGoToLibrary}
+              >
+                <VscLibrary size={iconSize18} className='fill-base-content' />
+              </button>
+            )}
             <BookmarkToggler bookKey={bookKey} />
             <TranslationToggler bookKey={bookKey} />
           </div>
           {enableAnnotationQuickActions && (
             <Dropdown
-              label={
-                annotationQuickAction
-                  ? _('Disable Quick Action')
-                  : _('Enable Quick Action on Selection')
-              }
+              ref={quickActionRef}
+              label={quickActionLabel}
               className='exclude-title-bar-mousedown dropdown-bottom dropdown-center'
               menuClassName='relative!'
-              buttonClassName={clsx(
-                'btn btn-ghost h-8 min-h-8 w-8 p-0',
-                viewSettings?.annotationQuickAction && 'bg-base-300/50',
-              )}
+              buttonClassName={
+                nativeBarsActive
+                  ? NATIVE_BAR_HIDDEN_TOGGLE
+                  : clsx(
+                      'btn btn-ghost h-8 min-h-8 w-8 p-0',
+                      viewSettings?.annotationQuickAction && 'bg-base-300/50',
+                    )
+              }
               toggleButton={
                 annotationQuickAction === 'highlight' || annotationQuickAction === null ? (
                   <HighlighterIcon
@@ -341,10 +395,13 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
         <div className='header-tools-end bg-base-100 z-20 ms-auto flex h-full min-w-max items-center gap-x-4 ps-2 max-[350px]:gap-x-2'>
           <NotebookToggler bookKey={bookKey} />
           <Dropdown
+            ref={viewOptionsRef}
             label={_('View Options')}
             containerClassName='h-8'
             className='exclude-title-bar-mousedown dropdown-bottom dropdown-end'
-            buttonClassName='btn btn-ghost h-8 min-h-8 w-8 p-0 mt-0'
+            buttonClassName={
+              nativeBarsActive ? NATIVE_BAR_HIDDEN_TOGGLE : 'btn btn-ghost h-8 min-h-8 w-8 p-0 mt-0'
+            }
             toggleButton={<MdOutlineMenu />}
             onToggle={handleToggleDropdown}
           >

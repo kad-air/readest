@@ -23,6 +23,7 @@ import FoliateViewer from './FoliateViewer';
 import HandwritingOverlay from './handwriting/HandwritingOverlay';
 import SectionInfo from './SectionInfo';
 import HeaderBar from './HeaderBar';
+import ReaderNativeBar from './ReaderNativeBar';
 import PageNavigationButtons from './PageNavigationButtons';
 import FooterBar from './footerbar/FooterBar';
 import ProgressBar from './ProgressBar';
@@ -465,6 +466,7 @@ const BooksGrid: React.FC<BooksGridProps> = ({ bookKeys, onCloseBook, onGoToLibr
       role='main'
       aria-label={_('Books Content')}
     >
+      <ReaderNativeBar />
       {bookKeys.map((bookKey, index) => (
         <BookCell
           key={bookKey}

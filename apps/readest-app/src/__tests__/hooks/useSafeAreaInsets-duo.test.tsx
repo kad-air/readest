@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
   setIsIPhoneDuo: vi.fn(),
   updateContentInsets: vi.fn(),
   storeIsIPhoneDuo: false,
+  insetsRefreshToken: 0,
 }));
 
 vi.mock('@/context/EnvContext', () => ({ useEnv: () => ({ appService: h.appService }) }));
@@ -19,6 +20,7 @@ vi.mock('@/store/themeStore', () => ({
       updateScreenCornerRadius: h.updateCornerRadius,
       setIsIPhoneDuo: h.setIsIPhoneDuo,
       updateContentInsets: h.updateContentInsets,
+      insetsRefreshToken: h.insetsRefreshToken,
     }),
     {
       getState: () => ({
@@ -44,6 +46,7 @@ afterEach(() => {
   h.setIsIPhoneDuo.mockClear();
   h.updateContentInsets.mockClear();
   h.storeIsIPhoneDuo = false;
+  h.insetsRefreshToken = 0;
 });
 
 const zero = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -95,5 +98,35 @@ describe('useSafeAreaInsets content insets', () => {
     h.getInsets.mockResolvedValue(zero);
     renderHook(() => useSafeAreaInsets());
     await waitFor(() => expect(h.updateContentInsets).toHaveBeenLastCalledWith(null));
+  });
+});
+
+describe('useSafeAreaInsets refresh requests', () => {
+  it('refetches when the refresh token changes on the Duo', async () => {
+    h.getInsets.mockResolvedValue(zero);
+    h.storeIsIPhoneDuo = true;
+    const { rerender } = renderHook(() => useSafeAreaInsets());
+    await waitFor(() => expect(h.getInsets).toHaveBeenCalledTimes(1));
+
+    rerender();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(h.getInsets).toHaveBeenCalledTimes(1);
+
+    h.insetsRefreshToken = 1;
+    rerender();
+    await waitFor(() => expect(h.getInsets).toHaveBeenCalledTimes(2));
+  });
+
+  it('does not refetch on a token change off the Duo', async () => {
+    h.getInsets.mockResolvedValue(zero);
+    const { rerender } = renderHook(() => useSafeAreaInsets());
+    await waitFor(() => expect(h.getInsets).toHaveBeenCalledTimes(1));
+
+    h.insetsRefreshToken = 1;
+    rerender();
+    h.insetsRefreshToken = 2;
+    rerender();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(h.getInsets).toHaveBeenCalledTimes(1);
   });
 });
