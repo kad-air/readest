@@ -5,7 +5,7 @@ import BookshelvesDialog from './components/BookshelvesDialog';
 import clsx from 'clsx';
 import * as React from 'react';
 import { MdChevronRight, MdClose } from 'react-icons/md';
-import { useState, useRef, useEffect, Suspense, useCallback, useMemo } from 'react';
+import { useState, useRef, useEffect, Suspense, useCallback } from 'react';
 import { ReadonlyURLSearchParams, useSearchParams } from 'next/navigation';
 
 import { Book, BooksGroup, type LibrarySearchConfig } from '@/types/book';
@@ -44,8 +44,6 @@ import { getCurrentWebview } from '@tauri-apps/api/webview';
 import { useEnv } from '@/context/EnvContext';
 import { useAuth } from '@/context/AuthContext';
 import { useThemeStore } from '@/store/themeStore';
-import { useNativeBar } from '@/hooks/useNativeBar';
-import { NATIVE_BAR_SYMBOLS, NativeBarSpec, NativeBarSpecItem } from '@/utils/nativeBar';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useLibraryStore } from '@/store/libraryStore';
 import { useSettingsStore } from '@/store/settingsStore';
@@ -230,40 +228,6 @@ const LibraryPageContent = ({ searchParams }: { searchParams: ReadonlyURLSearchP
   const _ = useTranslation();
   const { selectFiles } = useFileSelector(appService, _);
   const { safeAreaInsets: insets, isRoundedWindow } = useThemeStore();
-  // M1 scaffold, replaced by the real library header spec in M2: a sample set
-  // of items for iPhone Duo, where tapping an item toggles its selected state.
-  const [scaffoldSelected, setScaffoldSelected] = useState<string[]>([]);
-  const scaffoldSpec = useMemo<NativeBarSpec>(() => {
-    const toggle = (id: string) =>
-      setScaffoldSelected((ids) => (ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]));
-    const item = (
-      id: string,
-      title: string,
-      placement: NativeBarSpecItem['placement'],
-      symbol = NATIVE_BAR_SYMBOLS[id]!,
-    ): NativeBarSpecItem => ({
-      id,
-      title,
-      symbol,
-      placement,
-      selected: scaffoldSelected.includes(id),
-      onTap: () => toggle(id),
-    });
-    return {
-      items: [
-        { ...item('back', 'Back', 'leading'), priority: 'high' },
-        item('search', 'Search', 'trailing', 'magnifyingglass'),
-        item('settings', 'Settings', 'trailing', 'gearshape'),
-        item('toc', 'Contents', 'bottom'),
-        item('bookmark', 'Bookmark', 'bottom'),
-        {
-          ...item('tts', 'Read Aloud', 'bottom'),
-          badge: scaffoldSelected.includes('tts') ? 3 : undefined,
-        },
-      ],
-    };
-  }, [scaffoldSelected]);
-  useNativeBar(scaffoldSpec);
   const { clearBookData } = useBookDataStore();
   const { settings, setSettings, saveSettings } = useSettingsStore();
   const { isSettingsDialogOpen, setSettingsDialogOpen } = useSettingsStore();

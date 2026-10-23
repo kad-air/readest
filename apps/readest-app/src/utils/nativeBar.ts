@@ -48,6 +48,7 @@ export const NATIVE_BAR_SYMBOLS: Record<string, string> = {
   // library header
   import: 'plus',
   select: 'checkmark.circle',
+  selectAll: 'checklist',
   viewMenu: 'ellipsis.circle',
   settingsMenu: 'line.3.horizontal',
   back: 'chevron.left',

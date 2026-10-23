@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { FaChevronDown, FaSearch } from 'react-icons/fa';
 import { MdManageSearch } from 'react-icons/md';
 import { PiPlus } from 'react-icons/pi';
@@ -17,11 +17,17 @@ import { useTrafficLight } from '@/hooks/useTrafficLight';
 import { useResponsiveSize } from '@/hooks/useResponsiveSize';
 import useShortcuts from '@/hooks/useShortcuts';
 import WindowButtons from '@/components/WindowButtons';
-import Dropdown from '@/components/Dropdown';
+import Dropdown, { DropdownHandle } from '@/components/Dropdown';
+import { useNativeBar, useNativeBarsActive } from '@/hooks/useNativeBar';
 import SettingsMenu from './SettingsMenu';
 import ImportMenu from './ImportMenu';
 import LibrarySearchOptionsMenu from './LibrarySearchOptionsMenu';
 import ViewMenu from './ViewMenu';
+import { buildLibraryBarSpec } from '../nativeBar';
+
+// The HTML toggle of a dropdown whose button lives in the Duo's native bar: the
+// dropdown stays mounted so its menu opens in place, but the toggle takes no room.
+const NATIVE_BAR_HIDDEN_TOGGLE = 'invisible absolute h-0 w-0 min-h-0 overflow-hidden p-0';
 
 interface LibraryHeaderProps {
   isSelectMode: boolean;
@@ -73,6 +79,28 @@ const LibraryHeader: React.FC<LibraryHeaderProps> = ({
   const { isTrafficLightVisible } = useTrafficLight(headerRef);
   const iconSize18 = useResponsiveSize(18);
   const { safeAreaInsets: insets, isIPhoneDuo } = useThemeStore();
+
+  const nativeBarsActive = useNativeBarsActive();
+  const importMenuRef = useRef<DropdownHandle>(null);
+  const viewMenuRef = useRef<DropdownHandle>(null);
+  const settingsMenuRef = useRef<DropdownHandle>(null);
+  const nativeBarSpec = useMemo(
+    () =>
+      buildLibraryBarSpec(
+        { searchTarget, isSelectMode, isSelectAll },
+        {
+          openImportMenu: () => importMenuRef.current?.open(),
+          openViewMenu: () => viewMenuRef.current?.open(),
+          openSettingsMenu: () => settingsMenuRef.current?.open(),
+          exitSelectMode: onToggleSelectMode,
+          selectAll: onSelectAll,
+          deselectAll: onDeselectAll,
+        },
+        _,
+      ),
+    [searchTarget, isSelectMode, isSelectAll, onToggleSelectMode, onSelectAll, onDeselectAll, _],
+  );
+  useNativeBar(nativeBarsActive ? nativeBarSpec : null);
 
   useShortcuts({
     onToggleSelectMode,
@@ -202,13 +230,20 @@ const LibraryHeader: React.FC<LibraryHeaderProps> = ({
             )}
             {searchTarget !== 'text' && (
               <>
-                <span className='bg-base-content/50 mx-2 h-4 w-[0.5px]'></span>
+                {!nativeBarsActive && (
+                  <span className='bg-base-content/50 mx-2 h-4 w-[0.5px]'></span>
+                )}
                 <Dropdown
+                  ref={importMenuRef}
                   label={_('Import Books')}
                   className={clsx(
                     'exclude-title-bar-mousedown dropdown-bottom dropdown-center cursor-pointer',
                   )}
-                  buttonClassName='p-0 h-6 min-h-6 w-6 flex touch-target items-center justify-center bg-transparent!'
+                  buttonClassName={
+                    nativeBarsActive
+                      ? NATIVE_BAR_HIDDEN_TOGGLE
+                      : 'p-0 h-6 min-h-6 w-6 flex touch-target items-center justify-center bg-transparent!'
+                  }
                   toggleButton={<PiPlus role='none' className='m-0.5 h-5 w-5' />}
                 >
                   <ImportMenu
@@ -245,15 +280,17 @@ const LibraryHeader: React.FC<LibraryHeaderProps> = ({
               'w-max-[72px] w-min-[72px] sm:w-max-[80px] sm:w-min-[80px]',
             )}
           >
-            <button
-              onClick={isSelectAll ? onDeselectAll : onSelectAll}
-              className='btn btn-ghost text-base-content/85 h-8 min-h-8 w-[72px] p-0 sm:w-[80px]'
-              aria-label={isSelectAll ? _('Deselect') : _('Select All')}
-            >
-              <span className='font-sans text-base font-normal sm:text-sm whitespace-nowrap truncate'>
-                {isSelectAll ? _('Deselect') : _('Select All')}
-              </span>
-            </button>
+            {!nativeBarsActive && (
+              <button
+                onClick={isSelectAll ? onDeselectAll : onSelectAll}
+                className='btn btn-ghost text-base-content/85 h-8 min-h-8 w-[72px] p-0 sm:w-[80px]'
+                aria-label={isSelectAll ? _('Deselect') : _('Select All')}
+              >
+                <span className='font-sans text-base font-normal sm:text-sm whitespace-nowrap truncate'>
+                  {isSelectAll ? _('Deselect') : _('Select All')}
+                </span>
+              </button>
+            )}
             {/* Mounted without buttons so the header still drags the window (#6917). */}
             {appService?.hasWindowBar && (
               <WindowButtons
@@ -267,17 +304,23 @@ const LibraryHeader: React.FC<LibraryHeaderProps> = ({
         ) : (
           <div className='flex h-full items-center gap-x-2 sm:gap-x-4'>
             <Dropdown
+              ref={viewMenuRef}
               label={_('View Menu')}
               className='exclude-title-bar-mousedown dropdown-bottom dropdown-end'
-              buttonClassName='btn btn-ghost h-8 min-h-8 w-8 p-0'
+              buttonClassName={
+                nativeBarsActive ? NATIVE_BAR_HIDDEN_TOGGLE : 'btn btn-ghost h-8 min-h-8 w-8 p-0'
+              }
               toggleButton={<PiDotsThreeCircle role='none' size={iconSize18} />}
             >
               <ViewMenu />
             </Dropdown>
             <Dropdown
+              ref={settingsMenuRef}
               label={_('Settings Menu')}
               className='exclude-title-bar-mousedown dropdown-bottom dropdown-end'
-              buttonClassName='btn btn-ghost h-8 min-h-8 w-8 p-0'
+              buttonClassName={
+                nativeBarsActive ? NATIVE_BAR_HIDDEN_TOGGLE : 'btn btn-ghost h-8 min-h-8 w-8 p-0'
+              }
               toggleButton={<MdOutlineMenu role='none' size={iconSize18} />}
             >
               <SettingsMenu onPullLibrary={onPullLibrary} />

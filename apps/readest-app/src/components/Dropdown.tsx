@@ -7,6 +7,7 @@ import React, {
   useLayoutEffect,
   useRef,
   useId,
+  useImperativeHandle,
 } from 'react';
 import { useDropdownContext } from '@/context/DropdownContext';
 import { Overlay } from './Overlay';
@@ -27,6 +28,11 @@ interface DropdownProps {
   disabled?: boolean;
   onToggle?: (isOpen: boolean) => void;
   showTooltip?: boolean;
+}
+
+export interface DropdownHandle {
+  open: () => void;
+  close: () => void;
 }
 
 type MenuItemProps = {
@@ -69,18 +75,21 @@ const enhanceMenuItems = (
   return React.Children.map(children, processNode);
 };
 
-const Dropdown: React.FC<DropdownProps> = ({
-  label,
-  className,
-  menuClassName,
-  buttonClassName,
-  containerClassName,
-  toggleButton,
-  children,
-  disabled,
-  onToggle,
-  showTooltip = true,
-}) => {
+const Dropdown = React.forwardRef<DropdownHandle, DropdownProps>(function Dropdown(
+  {
+    label,
+    className,
+    menuClassName,
+    buttonClassName,
+    containerClassName,
+    toggleButton,
+    children,
+    disabled,
+    onToggle,
+    showTooltip = true,
+  },
+  ref,
+) {
   const dropdownId = useId();
   const context = useDropdownContext();
   const isOpen = context ? context.openDropdownId === dropdownId : false;
@@ -131,6 +140,11 @@ const Dropdown: React.FC<DropdownProps> = ({
     }
     onToggle?.(open);
   };
+
+  useImperativeHandle(ref, () => ({
+    open: () => setIsDropdownOpen(true),
+    close: () => setIsDropdownOpen(false),
+  }));
 
   const toggleDropdown = () => {
     setIsFocused(!isOpen);
@@ -193,6 +207,6 @@ const Dropdown: React.FC<DropdownProps> = ({
       </div>
     </div>
   );
-};
+});
 
 export default Dropdown;

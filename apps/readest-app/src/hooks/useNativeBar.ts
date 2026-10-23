@@ -17,6 +17,18 @@ const sendItems = (items: NativeBarItem[]) => {
     .catch((error) => console.error('native bar: set_bar_items threw', error));
 };
 
+/** Whether the Duo's native bars exist right now: Duo, iOS app, status bar shown. */
+export const useNativeBarsActive = (): boolean => {
+  const { appService } = useEnv();
+  const isIPhoneDuo = useThemeStore((s) => s.isIPhoneDuo);
+  const systemUIVisible = useThemeStore((s) => s.systemUIVisible);
+  const systemUIAlwaysHidden = useThemeStore((s) => s.systemUIAlwaysHidden);
+  return isNativeBarsActive(
+    { isIPhoneDuo, systemUIVisible, systemUIAlwaysHidden },
+    !!appService?.isIOSApp,
+  );
+};
+
 /**
  * Put `spec` in the iPhone Duo's native bars and route taps back to the items'
  * `onTap`. Pass null to show nothing. Off the Duo, outside the iOS app, or while
@@ -28,15 +40,7 @@ const sendItems = (items: NativeBarItem[]) => {
  * spec instead.
  */
 export const useNativeBar = (spec: NativeBarSpec | null): void => {
-  const { appService } = useEnv();
-  const isIPhoneDuo = useThemeStore((s) => s.isIPhoneDuo);
-  const systemUIVisible = useThemeStore((s) => s.systemUIVisible);
-  const systemUIAlwaysHidden = useThemeStore((s) => s.systemUIAlwaysHidden);
-  const isIOSApp = !!appService?.isIOSApp;
-  const active = isNativeBarsActive(
-    { isIPhoneDuo, systemUIVisible, systemUIAlwaysHidden },
-    isIOSApp,
-  );
+  const active = useNativeBarsActive();
 
   const specRef = useRef<NativeBarSpec | null>(spec);
   const sentRef = useRef<NativeBarItem[]>([]);
@@ -59,7 +63,7 @@ export const useNativeBar = (spec: NativeBarSpec | null): void => {
   }, []);
 
   useEffect(() => {
-    if (!isIPhoneDuo || !isIOSApp) return;
+    if (!active) return;
     let cancelled = false;
     let unsubscribe: (() => void) | undefined;
     subscribeNativeBarItemTaps((id) => {
@@ -74,5 +78,5 @@ export const useNativeBar = (spec: NativeBarSpec | null): void => {
       cancelled = true;
       unsubscribe?.();
     };
-  }, [isIPhoneDuo, isIOSApp]);
+  }, [active]);
 };
