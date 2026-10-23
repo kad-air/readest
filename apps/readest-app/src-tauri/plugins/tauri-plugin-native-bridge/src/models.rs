@@ -239,6 +239,13 @@ pub struct GetSafeAreaInsetsResponse {
     /// platform does not report it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bottom_corner_radius: Option<f64>,
+    /// Safe-area insets of the content view, which exceed the window's when a
+    /// native bar is present (iPhone Duo); absent where the platform does not
+    /// report them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content_top: Option<f64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub content_bottom: Option<f64>,
     /// Whether the device is an iPhone Duo (foldable); absent off iOS.
     #[serde(
         rename = "isIPhoneDuo",
@@ -854,4 +861,37 @@ pub struct WebBrowserCookiesRequest {
 #[derive(Debug, Deserialize)]
 pub struct WebBrowserCookiesResponse {
     pub cookies: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct BarItem {
+    pub id: String,
+    pub title: String,
+    pub symbol: String,
+    /// "leading" | "trailing" | "bottom"
+    pub placement: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub selected: Option<bool>,
+    /// "high" | "low"; absent means the standard priority.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub priority: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub badge: Option<u32>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetBarItemsRequest {
+    pub items: Vec<BarItem>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetBarItemsResponse {
+    pub success: bool,
+    #[serde(default)]
+    pub error: Option<String>,
+    #[serde(default)]
+    pub details: Option<std::collections::HashMap<String, String>>,
 }

@@ -69,6 +69,9 @@ interface ThemeState {
   // iPhone Duo, whose vertical status strip is a large left/right inset (#6307).
   // Every horizontal-inset rule is gated on it, so no other device changes.
   isIPhoneDuo: boolean;
+  // Safe-area insets of the content view, larger than the window's while a
+  // native bar is present on the Duo; null when the bridge does not report them.
+  contentInsets: { top: number; bottom: number } | null;
   isRoundedWindow: boolean;
   setSystemUIAlwaysHidden: (hidden: boolean) => void;
   setStatusBarHeight: (height: number) => void;
@@ -95,6 +98,7 @@ interface ThemeState {
   recordStatusBarHiddenInsets: (insets: Insets) => void;
   updateScreenCornerRadius: (radius: number) => void;
   setIsIPhoneDuo: (isIPhoneDuo: boolean) => void;
+  updateContentInsets: (insets: { top: number; bottom: number } | null) => void;
 }
 
 const LIBRARY_THEME_MODE_KEY = 'libraryThemeMode';
@@ -311,6 +315,7 @@ export const useThemeStore = create<ThemeState>((set, get) => {
     statusBarHiddenInsets: null,
     screenCornerRadius: 0,
     isIPhoneDuo: false,
+    contentInsets: null,
     isRoundedWindow: true,
     showSystemUI: () => set({ systemUIVisible: true }),
     dismissSystemUI: () => set({ systemUIVisible: false }),
@@ -443,6 +448,11 @@ export const useThemeStore = create<ThemeState>((set, get) => {
     },
     setIsIPhoneDuo: (isIPhoneDuo) => {
       if (get().isIPhoneDuo !== isIPhoneDuo) set({ isIPhoneDuo });
+    },
+    updateContentInsets: (insets) => {
+      const prev = get().contentInsets;
+      if (prev?.top === insets?.top && prev?.bottom === insets?.bottom) return;
+      set({ contentInsets: insets });
     },
   };
 });

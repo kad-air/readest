@@ -89,6 +89,12 @@ export interface GetSafeAreaInsetsResponse {
   isIPhoneDuo?: boolean;
   /** iOS: whether the root view controller currently hides the status bar. */
   statusBarHidden?: boolean;
+  /**
+   * iOS: the content view's safe-area insets, which exceed the window's when a
+   * native bar is present (iPhone Duo).
+   */
+  contentTop?: number;
+  contentBottom?: number;
   error?: string;
 }
 
@@ -782,4 +788,44 @@ export type PenEventKind = 'DRAW_MOVE' | 'DRAW_END' | 'ERASE_MOVE' | 'ERASE_END'
 export interface PenStrokeBatch {
   kind: PenEventKind;
   points: { x: number; y: number; pressure: number }[];
+}
+
+// ── iPhone Duo native bars ─────────────────────────────────────
+// Native UIBarButtonItems in a UINavigationController around the webview, so
+// the system lays them out in the Duo's side strip. iOS only.
+
+export interface NativeBarItem {
+  id: string;
+  title: string;
+  /** SF Symbol name. */
+  symbol: string;
+  placement: 'leading' | 'trailing' | 'bottom';
+  selected?: boolean;
+  /** Overflow priority: 'high' items are the last to move into the overflow menu. */
+  priority?: 'high' | 'low';
+  badge?: number;
+}
+
+export interface SetBarItemsResponse {
+  success: boolean;
+  error?: string;
+  details?: Record<string, string>;
+}
+
+export async function setNativeBarItems(items: NativeBarItem[]): Promise<SetBarItemsResponse> {
+  return invoke<SetBarItemsResponse>('plugin:native-bridge|set_bar_items', {
+    payload: { items },
+  });
+}
+
+export async function subscribeNativeBarItemTaps(onTap: (id: string) => void): Promise<() => void> {
+  const { addPluginListener } = await import('@tauri-apps/api/core');
+  const listener = await addPluginListener<{ id: string }>(
+    'native-bridge',
+    'bar-item-tap',
+    (event) => onTap(event.id),
+  );
+  return () => {
+    void listener.unregister();
+  };
 }

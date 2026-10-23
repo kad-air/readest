@@ -14,6 +14,7 @@ export const useSafeAreaInsets = () => {
     updateScreenCornerRadius,
     setIsIPhoneDuo,
     recordStatusBarHiddenInsets,
+    updateContentInsets,
   } = useThemeStore();
 
   const updateInsets = (insets: Insets) => {
@@ -60,6 +61,14 @@ export const useSafeAreaInsets = () => {
           updateInsets(insets);
           updateScreenCornerRadius(Math.round(response.bottomCornerRadius ?? 0));
           setIsIPhoneDuo(!!response.isIPhoneDuo);
+          updateContentInsets(
+            response.contentTop !== undefined && response.contentBottom !== undefined
+              ? {
+                  top: Math.round(response.contentTop),
+                  bottom: Math.round(response.contentBottom),
+                }
+              : null,
+          );
         }
       });
     } else if (hasCustomProperties) {

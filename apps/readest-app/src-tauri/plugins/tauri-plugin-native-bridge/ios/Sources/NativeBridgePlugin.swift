@@ -62,6 +62,21 @@ class LockScreenOrientationRequestArgs: Decodable {
   let orientation: String?
 }
 
+class BarItemArgs: Decodable {
+  let id: String
+  let title: String
+  let symbol: String
+  let placement: String
+  let selected: Bool?
+  /// "high" | "low"; anything else is the standard priority.
+  let priority: String?
+  let badge: Int?
+}
+
+class SetBarItemsRequestArgs: Decodable {
+  let items: [BarItemArgs]
+}
+
 class SetScreenWakeLockRequestArgs: Decodable {
   let enabled: Bool
 }
@@ -1077,7 +1092,7 @@ class NativeBridgePlugin: Plugin {
       // prefersStatusBarHidden and setPrefersStatusBarHidden:, which calls
       // setNeedsStatusBarAppearanceUpdate. Needs
       // UIViewControllerBasedStatusBarAppearance = YES in Info.plist.
-      let applied = self.setPrefersStatusBarHidden(!visible, on: keyWindow.rootViewController)
+      let applied = self.setPrefersStatusBarHidden(!visible, on: self.contentViewController(in: keyWindow))
       keyWindow.layoutIfNeeded()
       // The safe area follows the status bar a moment later (iPhone Duo's side
       // strip is an 84pt inset on the inner display). Resolve once it has, so
@@ -1525,14 +1540,20 @@ class NativeBridgePlugin: Plugin {
           bottomCornerRadius = probe.effectiveRadius(corner: [.bottomLeft, .bottomRight])
           probe.removeFromSuperview()
         }
+        // The content view's insets grow past the window's when a native bar
+        // is present (iPhone Duo inner display in portrait: a 58pt top bar and
+        // a floating toolbar at the bottom), so report them alongside.
+        let contentInsets = self.contentViewController(in: window)?.view.safeAreaInsets ?? insets
         invoke.resolve([
           "top": insets.top,
           "left": insets.left,
           "bottom": insets.bottom,
           "right": insets.right,
+          "contentTop": contentInsets.top,
+          "contentBottom": contentInsets.bottom,
           "bottomCornerRadius": bottomCornerRadius,
           "isIPhoneDuo": NativeBridgePlugin.isIPhoneDuo,
-          "statusBarHidden": window.rootViewController?.prefersStatusBarHidden ?? false
+          "statusBarHidden": self.contentViewController(in: window)?.prefersStatusBarHidden ?? false
         ])
       } else {
         invoke.resolve([
@@ -1544,6 +1565,123 @@ class NativeBridgePlugin: Plugin {
         ])
       }
     }
+  }
+
+  // ── iPhone Duo vertical bars (spike) ─────────────────────────────────
+  // Apple lays bars out in the Duo's side strip only when they belong to a
+  // UINavigationController or UITabBarController; HTML bars inside the webview
+  // never join it. This wraps tao's root view controller in a navigation
+  // controller on first use and lets JS populate the navigation bar and
+  // toolbar with UIBarButtonItems, so the system places them: vertically on
+  // the Duo's outer display and inner-landscape pose, horizontally elsewhere.
+  private var barItemIds: [Int: String] = [:]
+
+  /// tao's view controller, which owns the webview and the status bar
+  /// preference, whether or not it has been wrapped in a navigation controller.
+  private func contentViewController(in window: UIWindow) -> UIViewController? {
+    if let nav = window.rootViewController as? UINavigationController {
+      return nav.viewControllers.first
+    }
+    return window.rootViewController
+  }
+
+  /// Only iPhone Duo on iOS 27.1 gets the wrapper: elsewhere the window keeps
+  /// tao's controller as its root and no code path below runs.
+  private func installNavigationControllerIfNeeded() -> UINavigationController? {
+    guard NativeBridgePlugin.isIPhoneDuo else { return nil }
+    guard #available(iOS 27.1, *) else { return nil }
+    guard let window = appWindow() else { return nil }
+    if let nav = window.rootViewController as? UINavigationController { return nav }
+    guard let root = window.rootViewController else { return nil }
+    // UIKit raises UIViewControllerHierarchyInconsistency ("adding a root view
+    // controller ... as a child") while the controller is still the window's
+    // root, so detach it first.
+    window.rootViewController = nil
+    let nav = UINavigationController(rootViewController: root)
+    nav.setNavigationBarHidden(true, animated: false)
+    nav.setToolbarHidden(true, animated: false)
+    window.rootViewController = nav
+    logger.log("Duo bars: wrapped \(String(describing: type(of: root)), privacy: .public) in UINavigationController")
+    return nav
+  }
+
+  @objc public func set_bar_items(_ invoke: Invoke) throws {
+    let args = try invoke.parseArgs(SetBarItemsRequestArgs.self)
+    DispatchQueue.main.async {
+      // Everything below uses iOS 16–27.1 bar APIs; the wrapper is only ever
+      // installed under the same condition.
+      guard #available(iOS 27.1, *) else {
+        invoke.resolve(["success": false, "error": "Native bars need iOS 27.1"])
+        return
+      }
+      guard let nav = self.installNavigationControllerIfNeeded(),
+        let root = nav.viewControllers.first
+      else {
+        invoke.resolve([
+          "success": false,
+          "error": "Native bars are only installed on iPhone Duo with iOS 27.1",
+        ])
+        return
+      }
+      var leading: [UIBarButtonItem] = []
+      var trailing: [UIBarButtonItem] = []
+      var bottom: [UIBarButtonItem] = []
+      self.barItemIds = [:]
+      for (index, item) in args.items.enumerated() {
+        let button = UIBarButtonItem(
+          image: UIImage(systemName: item.symbol), style: .plain, target: self,
+          action: #selector(self.handleBarItemTap(_:)))
+        // Apple: give every item a title too; the system uses it in overflow
+        // menus and expanded forms of the vertical bar.
+        button.title = item.title
+        button.accessibilityLabel = item.title
+        button.tag = index
+        button.isSelected = item.selected ?? false
+        switch item.priority {
+        case "high": button.visibilityPriority = .high
+        case "low": button.visibilityPriority = .low
+        default: button.visibilityPriority = .standard
+        }
+        button.badge = item.badge.map { UIBarButtonItem.Badge.count($0) }
+        self.barItemIds[index] = item.id
+        switch item.placement {
+        case "leading": leading.append(button)
+        case "bottom": bottom.append(button)
+        default: trailing.append(button)
+        }
+      }
+      // Groups rather than left/rightBarButtonItems: Apple reserves the top of
+      // the vertical bar for Back/Close, and the leading group is what it
+      // treats as that slot when the stack has no back button of its own.
+      root.navigationItem.leftItemsSupplementBackButton = false
+      root.navigationItem.leadingItemGroups =
+        leading.isEmpty ? [] : [UIBarButtonItemGroup(barButtonItems: leading, representativeItem: nil)]
+      root.navigationItem.trailingItemGroups =
+        trailing.isEmpty ? [] : [UIBarButtonItemGroup(barButtonItems: trailing, representativeItem: nil)]
+      root.toolbarItems = bottom
+      nav.setNavigationBarHidden(leading.isEmpty && trailing.isEmpty, animated: false)
+      nav.setToolbarHidden(bottom.isEmpty, animated: false)
+      nav.view.layoutIfNeeded()
+      let verticalBar = "preferredVerticalBarBehavior=\(root.preferredVerticalBarBehavior.rawValue)"
+      let details: [String: String] = [
+        "windowSafeArea": NSCoder.string(for: nav.view.window?.safeAreaInsets ?? .zero),
+        "contentSafeArea": NSCoder.string(for: root.view.safeAreaInsets),
+        "contentFrame": NSCoder.string(for: root.view.frame),
+        "navBarFrame": NSCoder.string(for: nav.navigationBar.frame),
+        "navBarHidden": String(nav.isNavigationBarHidden),
+        "toolbarFrame": NSCoder.string(for: nav.toolbar.frame),
+        "toolbarHidden": String(nav.isToolbarHidden),
+        "verticalBar": verticalBar,
+      ]
+      logger.log("Duo bars: set \(args.items.count) items \(String(describing: details), privacy: .public)")
+      invoke.resolve(["success": true, "details": details])
+    }
+  }
+
+  @objc private func handleBarItemTap(_ sender: UIBarButtonItem) {
+    guard let id = barItemIds[sender.tag] else { return }
+    logger.log("Duo bars: tapped \(id, privacy: .public)")
+    trigger("bar-item-tap", data: ["id": id])
   }
 
   // ── Sync passphrase keychain ──────────────────────────────────────────

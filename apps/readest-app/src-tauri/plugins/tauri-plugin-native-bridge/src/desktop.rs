@@ -165,6 +165,13 @@ impl<R: Runtime> NativeBridge<R> {
         Err(crate::Error::UnsupportedPlatformError)
     }
 
+    pub fn set_bar_items(
+        &self,
+        _payload: SetBarItemsRequest,
+    ) -> crate::Result<SetBarItemsResponse> {
+        Err(crate::Error::UnsupportedPlatformError)
+    }
+
     pub fn get_safe_area_insets(&self) -> crate::Result<GetSafeAreaInsetsResponse> {
         Err(crate::Error::UnsupportedPlatformError)
     }

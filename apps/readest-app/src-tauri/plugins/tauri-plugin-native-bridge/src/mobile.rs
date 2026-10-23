@@ -220,6 +220,14 @@ impl<R: Runtime> NativeBridge<R> {
 }
 
 impl<R: Runtime> NativeBridge<R> {
+    pub fn set_bar_items(&self, payload: SetBarItemsRequest) -> crate::Result<SetBarItemsResponse> {
+        self.0
+            .run_mobile_plugin("set_bar_items", payload)
+            .map_err(Into::into)
+    }
+}
+
+impl<R: Runtime> NativeBridge<R> {
     pub fn get_safe_area_insets(&self) -> crate::Result<GetSafeAreaInsetsResponse> {
         self.0
             .run_mobile_plugin("get_safe_area_insets", ())

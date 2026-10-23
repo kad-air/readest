@@ -20,6 +20,7 @@ permissions = [
   "allow-iap-restore-purchases",
   "allow-get-system-color-scheme",
   "allow-get-safe-area-insets",
+  "allow-set-bar-items",
   "allow-get-screen-brightness",
   "allow-set-screen-brightness",
   "allow-set-screen-wake-lock",

@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   updateInsets: vi.fn(),
   updateCornerRadius: vi.fn(),
   setIsIPhoneDuo: vi.fn(),
+  updateContentInsets: vi.fn(),
   storeIsIPhoneDuo: false,
 }));
 
@@ -17,6 +18,7 @@ vi.mock('@/store/themeStore', () => ({
       updateSafeAreaInsets: h.updateInsets,
       updateScreenCornerRadius: h.updateCornerRadius,
       setIsIPhoneDuo: h.setIsIPhoneDuo,
+      updateContentInsets: h.updateContentInsets,
     }),
     {
       getState: () => ({
@@ -40,6 +42,7 @@ afterEach(() => {
   cleanup();
   h.getInsets.mockReset();
   h.setIsIPhoneDuo.mockClear();
+  h.updateContentInsets.mockClear();
   h.storeIsIPhoneDuo = false;
 });
 
@@ -70,5 +73,27 @@ describe('useSafeAreaInsets iPhone Duo flag', () => {
     h.storeIsIPhoneDuo = true;
     window.dispatchEvent(new Event('resize'));
     await waitFor(() => expect(h.getInsets).toHaveBeenCalledTimes(2));
+  });
+});
+
+describe('useSafeAreaInsets content insets', () => {
+  it('stores the rounded content insets when the bridge reports them', async () => {
+    h.getInsets.mockResolvedValue({
+      ...zero,
+      bottom: 34,
+      isIPhoneDuo: true,
+      contentTop: 59.4,
+      contentBottom: 81.6,
+    });
+    renderHook(() => useSafeAreaInsets());
+    await waitFor(() =>
+      expect(h.updateContentInsets).toHaveBeenLastCalledWith({ top: 59, bottom: 82 }),
+    );
+  });
+
+  it('clears the content insets when the bridge does not report them', async () => {
+    h.getInsets.mockResolvedValue(zero);
+    renderHook(() => useSafeAreaInsets());
+    await waitFor(() => expect(h.updateContentInsets).toHaveBeenLastCalledWith(null));
   });
 });

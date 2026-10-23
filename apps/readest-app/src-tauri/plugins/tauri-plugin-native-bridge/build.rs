@@ -18,6 +18,7 @@ const COMMANDS: &[&str] = &[
     "iap_restore_purchases",
     "get_system_color_scheme",
     "get_safe_area_insets",
+    "set_bar_items",
     "get_screen_brightness",
     "set_screen_brightness",
     "set_screen_wake_lock",

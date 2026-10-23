@@ -170,6 +170,14 @@ pub(crate) async fn get_system_color_scheme<R: Runtime>(
 }
 
 #[command]
+pub(crate) async fn set_bar_items<R: Runtime>(
+    app: AppHandle<R>,
+    payload: SetBarItemsRequest,
+) -> Result<SetBarItemsResponse> {
+    app.native_bridge().set_bar_items(payload)
+}
+
+#[command]
 pub(crate) async fn get_safe_area_insets<R: Runtime>(
     app: AppHandle<R>,
 ) -> Result<GetSafeAreaInsetsResponse> {
