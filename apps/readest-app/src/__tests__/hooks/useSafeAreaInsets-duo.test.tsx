@@ -122,11 +122,28 @@ describe('useSafeAreaInsets refresh requests', () => {
     const { rerender } = renderHook(() => useSafeAreaInsets());
     await waitFor(() => expect(h.getInsets).toHaveBeenCalledTimes(1));
 
-    h.insetsRefreshToken = 1;
-    rerender();
     h.insetsRefreshToken = 2;
+    rerender();
+    h.insetsRefreshToken = 3;
     rerender();
     await new Promise((r) => setTimeout(r, 0));
     expect(h.getInsets).toHaveBeenCalledTimes(1);
+  });
+
+  it('refetches once per token however many instances are mounted', async () => {
+    h.getInsets.mockResolvedValue(zero);
+    h.storeIsIPhoneDuo = true;
+    const { rerender } = renderHook(() => {
+      useSafeAreaInsets();
+      useSafeAreaInsets();
+      useSafeAreaInsets();
+    });
+    await waitFor(() => expect(h.getInsets).toHaveBeenCalledTimes(3));
+
+    h.insetsRefreshToken = 4;
+    rerender();
+    await waitFor(() => expect(h.getInsets).toHaveBeenCalledTimes(4));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(h.getInsets).toHaveBeenCalledTimes(4);
   });
 });

@@ -79,7 +79,7 @@ describe('buildLibraryBarSpec outside select mode', () => {
 describe('buildLibraryBarSpec in select mode', () => {
   const selecting = { searchTarget: 'books', isSelectMode: true, isSelectAll: false } as const;
 
-  it('shows the selected Select Books item first, then Select All', () => {
+  it('shows the selected Select Books item first, then Import and Select All', () => {
     const { items } = buildLibraryBarSpec(selecting, makeHandlers(), t);
     expect(items.map(({ onTap: _onTap, ...item }) => item)).toEqual([
       {
@@ -89,6 +89,12 @@ describe('buildLibraryBarSpec in select mode', () => {
         placement: 'leading',
         selected: true,
         priority: 'high',
+      },
+      {
+        id: 'import',
+        title: 'Import Books',
+        symbol: NATIVE_BAR_SYMBOLS['import'],
+        placement: 'trailing',
       },
       {
         id: 'selectAll',
@@ -123,6 +129,13 @@ describe('buildLibraryBarSpec in select mode', () => {
     items.find((item) => item.id === 'selectAll')!.onTap();
     expect(handlers.deselectAll).toHaveBeenCalledTimes(1);
     expect(handlers.selectAll).not.toHaveBeenCalled();
+  });
+
+  it('keeps Import through select mode, like the HTML header', () => {
+    const handlers = makeHandlers();
+    const { items } = buildLibraryBarSpec(selecting, handlers, t);
+    items.find((item) => item.id === 'import')!.onTap();
+    expect(handlers.openImportMenu).toHaveBeenCalledTimes(1);
   });
 
   it('keeps the select items for a full-text search too', () => {

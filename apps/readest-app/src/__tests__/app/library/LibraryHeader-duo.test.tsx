@@ -149,6 +149,14 @@ describe('LibraryHeader on the iPhone Duo with native bars active', () => {
     expect(queryByTestId('view-menu')).not.toBeNull();
   });
 
+  it('closes an open menu on a second tap of its native item', () => {
+    const { queryByTestId } = renderHeader();
+    act(() => h.tap!('viewMenu'));
+    expect(queryByTestId('view-menu')).not.toBeNull();
+    act(() => h.tap!('viewMenu'));
+    expect(queryByTestId('view-menu')).toBeNull();
+  });
+
   it('opens the Settings and Import menus from their native items', () => {
     const { queryByTestId } = renderHeader();
     act(() => h.tap!('settingsMenu'));
@@ -158,7 +166,7 @@ describe('LibraryHeader on the iPhone Duo with native bars active', () => {
     expect(queryByTestId('settings-menu')).toBeNull();
   });
 
-  it('sends Select Books and Select All in select mode and hides the text button', () => {
+  it('sends Select Books, Import and Select All in select mode and hides the text button', () => {
     const { queryByLabelText } = renderHeader({ isSelectMode: true });
     expect(sentItems()).toEqual([
       {
@@ -168,6 +176,12 @@ describe('LibraryHeader on the iPhone Duo with native bars active', () => {
         placement: 'leading',
         selected: true,
         priority: 'high',
+      },
+      {
+        id: 'import',
+        title: 'Import Books',
+        symbol: 'plus',
+        placement: 'trailing',
       },
       {
         id: 'selectAll',
@@ -190,7 +204,7 @@ describe('LibraryHeader on the iPhone Duo with native bars active', () => {
 
   it('offers Deselect when everything is selected', () => {
     renderHeader({ isSelectMode: true, isSelectAll: true });
-    expect(sentItems()[1]).toMatchObject({ id: 'selectAll', title: 'Deselect', selected: true });
+    expect(sentItems()[2]).toMatchObject({ id: 'selectAll', title: 'Deselect', selected: true });
     act(() => h.tap!('selectAll'));
     expect(onDeselectAll).toHaveBeenCalledTimes(1);
   });

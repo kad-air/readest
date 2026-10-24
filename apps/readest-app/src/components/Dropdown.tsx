@@ -30,9 +30,15 @@ interface DropdownProps {
   showTooltip?: boolean;
 }
 
+/**
+ * Drives a dropdown whose toggle button is somewhere else, such as the iPhone
+ * Duo's native bar. `open` and `toggle` move focus into the menu, since the
+ * tap that opened it never focused the HTML toggle.
+ */
 export interface DropdownHandle {
   open: () => void;
   close: () => void;
+  toggle: () => void;
 }
 
 type MenuItemProps = {
@@ -141,9 +147,25 @@ const Dropdown = React.forwardRef<DropdownHandle, DropdownProps>(function Dropdo
     onToggle?.(open);
   };
 
+  const focusMenuWhenOpenRef = useRef(false);
+  useLayoutEffect(() => {
+    if (!isOpen || !focusMenuWhenOpenRef.current) return;
+    focusMenuWhenOpenRef.current = false;
+    detailsRef.current
+      ?.querySelector<HTMLElement>(
+        ':scope > :not(summary) :is([role="menuitem"], button, [href], [tabindex]:not([tabindex="-1"]))',
+      )
+      ?.focus();
+  }, [isOpen]);
+
+  const openFromHandle = () => {
+    focusMenuWhenOpenRef.current = true;
+    setIsDropdownOpen(true);
+  };
   useImperativeHandle(ref, () => ({
-    open: () => setIsDropdownOpen(true),
+    open: openFromHandle,
     close: () => setIsDropdownOpen(false),
+    toggle: () => (isOpen ? setIsDropdownOpen(false) : openFromHandle()),
   }));
 
   const toggleDropdown = () => {

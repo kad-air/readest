@@ -6,6 +6,8 @@ import { Insets } from '@/types/misc';
 import { getSafeAreaInsets } from '@/utils/bridge';
 import { getOSPlatform } from '@/utils/misc';
 
+let handledRefreshToken = 0;
+
 export const useSafeAreaInsets = () => {
   const { appService } = useEnv();
 
@@ -90,11 +92,15 @@ export const useSafeAreaInsets = () => {
   }, [appService]);
 
   // A native bar appearing or going changes the insets without any window event.
-  // Only the Duo has native bars, so no other device refetches.
+  // Only the Duo has native bars, so no other device refetches. The hook is
+  // mounted once per theme consumer, so the first instance to see a token
+  // fetches and the rest skip it.
   const refreshTokenRef = useRef(insetsRefreshToken);
   useEffect(() => {
     if (refreshTokenRef.current === insetsRefreshToken) return;
     refreshTokenRef.current = insetsRefreshToken;
+    if (handledRefreshToken === insetsRefreshToken) return;
+    handledRefreshToken = insetsRefreshToken;
     if (useThemeStore.getState().isIPhoneDuo) onUpdateInsets();
   }, [insetsRefreshToken, onUpdateInsets]);
 

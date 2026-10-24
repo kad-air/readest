@@ -162,7 +162,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
             symbol: NATIVE_BAR_SYMBOLS['quickAction']!,
             placement: 'leading',
             selected: !!annotationQuickAction,
-            onTap: () => quickActionRef.current?.open(),
+            onTap: () => quickActionRef.current?.toggle(),
           },
         ]
       : null,
@@ -173,7 +173,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       title: _('View Options'),
       symbol: NATIVE_BAR_SYMBOLS['viewOptions']!,
       placement: 'trailing',
-      onTap: () => viewOptionsRef.current?.open(),
+      onTap: () => viewOptionsRef.current?.toggle(),
     },
   ]);
 
@@ -232,6 +232,10 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
   }, []);
 
   const isHeaderCompact = headerWidth > 0 && headerWidth < 350;
+  // On the Duo's cover display every button sits in the native bar and the
+  // title is `hidden sm:flex`, so the band would be empty: collapse it. The
+  // dropdowns stay mounted inside it for the native taps.
+  const isHeaderEmpty = nativeBarsActive && window.innerWidth < 640;
   const insets = window.innerWidth < 640 ? screenInsets : gridInsets;
   const isHeaderVisible = hoveredBookKey === bookKey || isDropdownOpen;
   const isMobile = appService?.isMobile || window.innerWidth < 640;
@@ -339,8 +343,9 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
         role='banner'
         aria-label={_('Header Bar')}
         className={clsx(
-          `header-bar bg-base-100 absolute top-0 z-10 flex h-11 w-full items-center pr-4`,
-          `shadow-xs transition-[opacity,margin-top] duration-300`,
+          `header-bar bg-base-100 absolute top-0 z-10 flex ${isHeaderEmpty ? 'h-0' : 'h-11'} w-full items-center pr-4`,
+          !isHeaderEmpty && 'shadow-xs',
+          `transition-[opacity,margin-top] duration-300`,
           trafficLightInHeader ? 'pl-20' : isSideBarVisible ? 'ps-4' : 'ps-4 sm:ps-1.5',
           appService?.hasRoundedWindow && 'rounded-window-top-right',
           !isSideBarVisible && appService?.hasRoundedWindow && 'rounded-window-top-left',

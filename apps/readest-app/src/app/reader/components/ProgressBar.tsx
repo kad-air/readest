@@ -5,6 +5,7 @@ import type { Insets } from '@/types/misc';
 import { useEnv } from '@/context/EnvContext';
 import { useReaderStore } from '@/store/readerStore';
 import { useThemeStore } from '@/store/themeStore';
+import { useNativeBarsActive } from '@/hooks/useNativeBar';
 import { useBookProgress } from '@/store/readerProgressStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { useBookDataStore } from '@/store/bookDataStore';
@@ -42,6 +43,10 @@ interface ProgressBarProps {
   horizontalGap: number;
   contentInsets: Insets;
   gridInsets: Insets;
+  // The cell's insets with the status bar showing. On iPhone Duo the page keeps
+  // the status-bar-hidden insets (#6508), so while its native bars are up the
+  // footer's ends clear the strip from these instead.
+  chromeGridInsets?: Insets;
   // The spread's Column Gap (px) in effect, 0 when none (getSpreadColumnGap).
   columnGap?: number;
   // Rounded screen corners this footer's ends run into.
@@ -63,6 +68,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
   horizontalGap,
   contentInsets,
   gridInsets,
+  chromeGridInsets,
   columnGap = 0,
   cornerRadii = NO_CORNERS,
   hidden = false,
@@ -70,6 +76,10 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
   const _ = useTranslation();
   const { appService } = useEnv();
   const isIPhoneDuo = useThemeStore((s) => s.isIPhoneDuo);
+  const nativeBarsActive = useNativeBarsActive();
+  // Per physical side: the side inset the ends clear, with the page margin on
+  // top of it taken from the page's own insets.
+  const sideInsets = nativeBarsActive && chromeGridInsets ? chromeGridInsets : gridInsets;
   const getBookData = useBookDataStore((s) => s.getBookData);
   const getViewSettings = useReaderStore((s) => s.getViewSettings);
   const getView = useReaderStore((s) => s.getView);
@@ -340,14 +350,14 @@ const ProgressBar: React.FC<ProgressBarProps> = ({
                     // the paginator's gutter (#6307), and clear of a rounded
                     // corner. Physical sides: the insets are.
                     paddingLeft: inlinePadding(
-                      contentInsets.left + gridInsets.left,
+                      contentInsets.left - gridInsets.left + 2 * sideInsets.left,
                       cornerClearance(cornerRadii.left),
-                      gridInsets.left,
+                      sideInsets.left,
                     ),
                     paddingRight: inlinePadding(
-                      contentInsets.right + gridInsets.right,
+                      contentInsets.right - gridInsets.right + 2 * sideInsets.right,
                       cornerClearance(cornerRadii.right),
-                      gridInsets.right,
+                      sideInsets.right,
                     ),
                   }
                 : {

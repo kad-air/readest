@@ -19,37 +19,26 @@ export interface LibraryBarHandlers {
 /**
  * The library header's icon buttons as native bar items. The mobile HTML header
  * has no Select Books button, so outside select mode the bar has none either.
+ * Import stays through select mode and leaves only for a full-text search, as
+ * the HTML button does.
  */
 export const buildLibraryBarSpec = (
   state: LibraryBarState,
   handlers: LibraryBarHandlers,
   t: (key: string) => string,
 ): NativeBarSpec => {
-  if (state.isSelectMode) {
-    return {
-      items: [
-        {
-          id: 'select',
-          title: t('Select Books'),
-          symbol: NATIVE_BAR_SYMBOLS['select']!,
-          placement: 'leading',
-          selected: true,
-          priority: 'high',
-          onTap: handlers.exitSelectMode,
-        },
-        {
-          id: 'selectAll',
-          title: t(state.isSelectAll ? 'Deselect' : 'Select All'),
-          symbol: NATIVE_BAR_SYMBOLS['selectAll']!,
-          placement: 'trailing',
-          selected: state.isSelectAll,
-          onTap: state.isSelectAll ? handlers.deselectAll : handlers.selectAll,
-        },
-      ],
-    };
-  }
-
   const items: NativeBarSpecItem[] = [];
+  if (state.isSelectMode) {
+    items.push({
+      id: 'select',
+      title: t('Select Books'),
+      symbol: NATIVE_BAR_SYMBOLS['select']!,
+      placement: 'leading',
+      selected: true,
+      priority: 'high',
+      onTap: handlers.exitSelectMode,
+    });
+  }
   if (state.searchTarget !== 'text') {
     items.push({
       id: 'import',
@@ -58,6 +47,17 @@ export const buildLibraryBarSpec = (
       placement: 'trailing',
       onTap: handlers.openImportMenu,
     });
+  }
+  if (state.isSelectMode) {
+    items.push({
+      id: 'selectAll',
+      title: t(state.isSelectAll ? 'Deselect' : 'Select All'),
+      symbol: NATIVE_BAR_SYMBOLS['selectAll']!,
+      placement: 'trailing',
+      selected: state.isSelectAll,
+      onTap: state.isSelectAll ? handlers.deselectAll : handlers.selectAll,
+    });
+    return { items };
   }
   items.push(
     {

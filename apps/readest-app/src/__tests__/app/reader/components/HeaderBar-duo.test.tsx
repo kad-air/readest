@@ -242,6 +242,14 @@ describe('HeaderBar with the Duo native bars active', () => {
     }
   });
 
+  it('closes View Options on a second tap of its native item', () => {
+    const { queryByTestId } = renderHeader();
+    act(() => slice('viewOptions')!.items[0]!.onTap());
+    expect(queryByTestId('view-menu')).not.toBeNull();
+    act(() => slice('viewOptions')!.items[0]!.onTap());
+    expect(queryByTestId('view-menu')).toBeNull();
+  });
+
   it('opens the View Options and Quick Action menus from their native items', () => {
     const { getByLabelText, queryByTestId } = renderHeader();
     expect(queryByTestId('view-menu')).toBeNull();
@@ -298,6 +306,23 @@ describe('HeaderBar with the Duo native bars active', () => {
     vi.stubGlobal('innerWidth', 669);
     renderHeader();
     expect(sliceNames()).toContain('book-1:library');
+  });
+
+  it('collapses the empty header band on the cover display, keeps it on the inner display', () => {
+    // Under 640 the title is `hidden sm:flex` and every button is native, so
+    // the band has nothing to show; the dropdowns inside it stay mounted.
+    vi.stubGlobal('innerWidth', 466);
+    const narrow = renderHeader();
+    const narrowBanner = narrow.getByRole('banner');
+    expect(narrowBanner.className).toContain('h-0');
+    expect(narrowBanner.className).not.toContain('h-11');
+    expect(narrowBanner.className).not.toContain('shadow-xs');
+    expect(narrow.getByLabelText('View Options')).toBeTruthy();
+    narrow.unmount();
+    vi.stubGlobal('innerWidth', 669);
+    const wide = renderHeader();
+    expect(wide.getByRole('banner').className).toContain('h-11');
+    expect(wide.getByRole('banner').className).toContain('shadow-xs');
   });
 
   it('keeps the book title in the header', () => {

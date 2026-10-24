@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import { act, render, screen, cleanup, fireEvent } from '@testing-library/react';
 
-import Dropdown from '@/components/Dropdown';
+import { createRef } from 'react';
+import Dropdown, { DropdownHandle } from '@/components/Dropdown';
 import { DropdownProvider } from '@/context/DropdownContext';
 
 vi.mock('@/hooks/useTranslation', () => ({
@@ -90,5 +91,54 @@ describe('Dropdown keyboard activation', () => {
     } finally {
       window.removeEventListener('keydown', onWindowKeyDown);
     }
+  });
+});
+
+describe('Dropdown handle (a toggle elsewhere, such as the Duo native bar)', () => {
+  const renderWithHandle = () => {
+    const ref = createRef<DropdownHandle>();
+    const view = render(
+      <DropdownProvider>
+        <Dropdown
+          ref={ref}
+          label='Test Menu'
+          toggleButton={<span>Toggle</span>}
+          showTooltip={false}
+        >
+          <div>
+            <button type='button'>Menu Item</button>
+          </div>
+        </Dropdown>
+      </DropdownProvider>,
+    );
+    return { ...view, ref };
+  };
+
+  it('open() shows the menu and moves focus onto its first item', () => {
+    const { ref } = renderWithHandle();
+    act(() => ref.current!.open());
+    expect(screen.getByRole('button', { name: 'Test Menu' }).getAttribute('aria-expanded')).toBe(
+      'true',
+    );
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Menu Item' }));
+  });
+
+  it('toggle() closes an open menu and opens a closed one', () => {
+    const { ref } = renderWithHandle();
+    const toggle = screen.getByRole('button', { name: 'Test Menu' });
+    act(() => ref.current!.toggle());
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    act(() => ref.current!.toggle());
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('button', { name: 'Menu Item' })).toBeNull();
+  });
+
+  it('a click on the HTML toggle leaves focus where it was', () => {
+    renderWithHandle();
+    const toggle = screen.getByRole('button', { name: 'Test Menu' });
+    toggle.focus();
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(document.activeElement).toBe(toggle);
   });
 });

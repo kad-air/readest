@@ -270,6 +270,7 @@ const BookCellInner: React.FC<BookCellProps> = ({
             horizontalGap={horizontalGapPercent}
             contentInsets={contentInsets}
             gridInsets={gridInsets}
+            chromeGridInsets={chromeGridInsets}
             columnGap={columnGap}
             hidden={pageOverflowing}
           />
@@ -305,6 +306,7 @@ const BookCellInner: React.FC<BookCellProps> = ({
             horizontalGap={horizontalGapPercent}
             contentInsets={contentInsets}
             gridInsets={gridInsets}
+            chromeGridInsets={chromeGridInsets}
             columnGap={columnGap}
             cornerRadii={cornerRadii}
             hidden={pageOverflowing}

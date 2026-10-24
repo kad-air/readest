@@ -3,6 +3,7 @@ import React from 'react';
 import { Insets } from '@/types/misc';
 import { useEnv } from '@/context/EnvContext';
 import { useThemeStore } from '@/store/themeStore';
+import { useNativeBarsActive } from '@/hooks/useNativeBar';
 import { useReaderStore } from '@/store/readerStore';
 import { useTranslation } from '@/hooks/useTranslation';
 import { eventDispatcher } from '@/utils/event';
@@ -26,6 +27,10 @@ interface SectionInfoProps {
   horizontalGap: number;
   contentInsets: Insets;
   gridInsets: Insets;
+  // The cell's insets with the status bar showing. On iPhone Duo the page keeps
+  // the status-bar-hidden insets (#6508), so while its native bars are up the
+  // band's ends clear the strip from these instead.
+  chromeGridInsets?: Insets;
   // The spread's Column Gap (px) in effect, 0 when none (getSpreadColumnGap).
   columnGap?: number;
   // A fixed-layout page that runs past the viewport (usePageOverflow).
@@ -42,6 +47,7 @@ const SectionInfo: React.FC<SectionInfoProps> = ({
   horizontalGap,
   contentInsets,
   gridInsets,
+  chromeGridInsets,
   columnGap = 0,
   hidden = false,
 }) => {
@@ -49,6 +55,10 @@ const SectionInfo: React.FC<SectionInfoProps> = ({
   const { appService } = useEnv();
   const { hoveredBookKey, getView, getViewSettings, setHoveredBookKey } = useReaderStore();
   const { systemUIVisible, statusBarHeight, isIPhoneDuo } = useThemeStore();
+  const nativeBarsActive = useNativeBarsActive();
+  // Per physical side: the side inset the ends clear, with the page margin on
+  // top of it taken from the page's own insets.
+  const sideInsets = nativeBarsActive && chromeGridInsets ? chromeGridInsets : gridInsets;
   const getBookData = useBookDataStore((s) => s.getBookData);
   const viewSettings = getViewSettings(bookKey)!;
   const bookData = getBookData(bookKey);
@@ -156,15 +166,15 @@ const SectionInfo: React.FC<SectionInfoProps> = ({
                       // under a Column Gap.
                       paddingLeft: getMarginalInlinePadding(
                         horizontalGap,
-                        contentInsets.left + gridInsets.left,
+                        contentInsets.left - gridInsets.left + 2 * sideInsets.left,
                         columnGap,
-                        gridInsets.left,
+                        sideInsets.left,
                       ),
                       paddingRight: getMarginalInlinePadding(
                         horizontalGap,
-                        contentInsets.right + gridInsets.right,
+                        contentInsets.right - gridInsets.right + 2 * sideInsets.right,
                         columnGap,
-                        gridInsets.right,
+                        sideInsets.right,
                       ),
                     }
                   : {

@@ -89,9 +89,9 @@ const LibraryHeader: React.FC<LibraryHeaderProps> = ({
       buildLibraryBarSpec(
         { searchTarget, isSelectMode, isSelectAll },
         {
-          openImportMenu: () => importMenuRef.current?.open(),
-          openViewMenu: () => viewMenuRef.current?.open(),
-          openSettingsMenu: () => settingsMenuRef.current?.open(),
+          openImportMenu: () => importMenuRef.current?.toggle(),
+          openViewMenu: () => viewMenuRef.current?.toggle(),
+          openSettingsMenu: () => settingsMenuRef.current?.toggle(),
           exitSelectMode: onToggleSelectMode,
           selectAll: onSelectAll,
           deselectAll: onDeselectAll,
