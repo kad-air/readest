@@ -82,6 +82,17 @@ describe('NavigationBar with the Duo native bars active', () => {
     ]);
   });
 
+  it('keeps Reading Progress and Speak visible longest when the strip overflows', () => {
+    renderBar();
+    expect(footer()!.items.map((i) => [i.id, i.priority])).toEqual([
+      ['toc', undefined],
+      ['color', undefined],
+      ['progress', 'high'],
+      ['font', undefined],
+      ['tts', 'high'],
+    ]);
+  });
+
   it('renders no HTML bar at all', () => {
     const { container } = renderBar();
     expect(container.firstChild).toBeNull();

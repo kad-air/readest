@@ -48,20 +48,28 @@ export const NavigationBar: React.FC<NavigationBarProps> = ({
   // On the Duo the five tab buttons live in the native bar; the HTML row is gone.
   const nativeBarsActive = useNativeBarsActive();
   const showToc = !(isSideBarVisible && isSideBarPinned);
-  const tab = (id: string, title: string, selected: boolean): NativeBarSpecItem => ({
+  // Items overflow bottom to top when the strip is short (the cover display);
+  // Reading Progress and Speak are the ones to keep in reach.
+  const tab = (
+    id: string,
+    title: string,
+    selected: boolean,
+    priority?: 'high' | 'low',
+  ): NativeBarSpecItem => ({
     id,
     title,
     symbol: NATIVE_BAR_SYMBOLS[id]!,
     placement: 'bottom',
     selected,
+    ...(priority ? { priority } : {}),
     onTap: () => onSetActionTab(id),
   });
   useNativeBarSlice(`${bookKey}:footer`, 20, [
     ...(showToc ? [tab('toc', _('Table of Contents'), actionTab === 'toc')] : []),
     tab('color', _('Color'), actionTab === 'color'),
-    tab('progress', _('Reading Progress'), actionTab === 'progress'),
+    tab('progress', _('Reading Progress'), actionTab === 'progress', 'high'),
     tab('font', _('Font & Layout'), actionTab === 'font'),
-    tab('tts', _('Speak'), !!viewState?.ttsEnabled),
+    tab('tts', _('Speak'), !!viewState?.ttsEnabled, 'high'),
   ]);
 
   if (nativeBarsActive) return null;
