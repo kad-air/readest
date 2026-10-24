@@ -256,6 +256,10 @@ pub struct GetSafeAreaInsetsResponse {
     /// iOS: whether the root view controller currently hides the status bar.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub status_bar_hidden: Option<bool>,
+    /// iOS: whether `set_bar_items` can place items in the system's bars here
+    /// (iPhone Duo on iOS 27.1, built with the 27.1 SDK); absent elsewhere.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_bars_supported: Option<bool>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -873,11 +877,10 @@ pub struct BarItem {
     pub placement: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub selected: Option<bool>,
-    /// "high" | "low"; absent means the standard priority.
+    /// "high" keeps the item out of the overflow menu longest; absent means
+    /// the standard priority.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub priority: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub badge: Option<u32>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -892,6 +895,4 @@ pub struct SetBarItemsResponse {
     pub success: bool,
     #[serde(default)]
     pub error: Option<String>,
-    #[serde(default)]
-    pub details: Option<std::collections::HashMap<String, String>>,
 }

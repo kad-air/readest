@@ -21,6 +21,7 @@ const h = vi.hoisted(() => ({
     systemUIAlwaysHidden: false,
     statusBarHeight: 0,
     isIPhoneDuo: false,
+    nativeBarsSupported: false,
   },
   viewSettings: {
     enableAnnotationQuickActions: true,
@@ -214,7 +215,7 @@ describe('HeaderBar parity with the Duo flag set but not on iOS', () => {
       hasTrafficLight: false,
       hasWindowBar: false,
     };
-    h.theme = { ...h.theme, isIPhoneDuo: true };
+    h.theme = { ...h.theme, isIPhoneDuo: true, nativeBarsSupported: true };
     const { getByTitle } = renderHeader();
     expect(getByTitle('Go to Library')).toBeTruthy();
     expect(h.setItems).not.toHaveBeenCalled();

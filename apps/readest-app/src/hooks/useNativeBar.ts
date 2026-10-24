@@ -9,36 +9,42 @@ import {
   toNativeBarItems,
 } from '@/utils/nativeBar';
 
+// A failed send withdraws support, so the HTML buttons come back instead of a
+// Duo with no toolbar at all (iOS 27.0, no window, an older SDK).
 const sendItems = (items: NativeBarItem[], onSent: () => void) => {
+  const fail = (why: unknown) => {
+    console.error('native bar: set_bar_items failed, keeping the HTML buttons', why);
+    useThemeStore.getState().setNativeBarsSupported(false);
+  };
   setNativeBarItems(items)
-    .then((result) => {
-      if (!result.success) console.error('native bar: set_bar_items failed', result);
-      else onSent();
-    })
-    .catch((error) => console.error('native bar: set_bar_items threw', error));
+    .then((result) => (result.success ? onSent() : fail(result)))
+    .catch(fail);
 };
 
-/** Whether the Duo's native bars exist right now: Duo, iOS app, status bar shown. */
+/**
+ * Whether the native bars own the toolbar buttons right now: the bridge reported
+ * support (iPhone Duo, iOS 27.1, 27.1 SDK), the iOS app, status bar shown.
+ */
 export const useNativeBarsActive = (): boolean => {
   const { appService } = useEnv();
   const isIPhoneDuo = useThemeStore((s) => s.isIPhoneDuo);
+  const nativeBarsSupported = useThemeStore((s) => s.nativeBarsSupported);
   const systemUIVisible = useThemeStore((s) => s.systemUIVisible);
   const systemUIAlwaysHidden = useThemeStore((s) => s.systemUIAlwaysHidden);
   return isNativeBarsActive(
-    { isIPhoneDuo, systemUIVisible, systemUIAlwaysHidden },
+    { isIPhoneDuo, nativeBarsSupported, systemUIVisible, systemUIAlwaysHidden },
     !!appService?.isIOSApp,
   );
 };
 
 /**
  * Put `spec` in the iPhone Duo's native bars and route taps back to the items'
- * `onTap`. Pass null to show nothing. Off the Duo, outside the iOS app, or while
- * the status bar is hidden (the side strip only exists with it) the bridge is
- * never called with items.
+ * `onTap`. Pass null to show nothing. While the bars are inactive (see
+ * `useNativeBarsActive`) the bridge is never called with items.
  *
  * One owner at a time: a page, or the reader's active book. Two simultaneous
- * owners would overwrite each other's items and thrash; M2/M3 compose a single
- * spec instead.
+ * owners would overwrite each other's items and thrash; the reader composes
+ * its books' slices into one spec (`ReaderNativeBar`) for that reason.
  */
 export const useNativeBar = (spec: NativeBarSpec | null): void => {
   const active = useNativeBarsActive();

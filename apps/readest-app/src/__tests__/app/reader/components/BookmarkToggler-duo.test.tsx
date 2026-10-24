@@ -3,7 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   appService: { isIOSApp: true, isMobile: true, isMobileApp: true },
-  theme: { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false },
+  theme: {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  },
   booknotes: [] as Array<Record<string, unknown>>,
   ribbonVisible: false,
   setRibbon: vi.fn(),
@@ -47,7 +52,12 @@ const bookmark = (cfi: string) => ({ type: 'bookmark', cfi, deletedAt: null });
 const slice = () => useNativeBarStore.getState().slices['book-1:bookmark'];
 
 beforeEach(() => {
-  h.theme = { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false };
+  h.theme = {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  };
   h.booknotes = [];
   h.ribbonVisible = false;
   h.setRibbon.mockReset();

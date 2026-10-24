@@ -7,7 +7,8 @@ const h = vi.hoisted(() => ({
   updateInsets: vi.fn(),
   updateCornerRadius: vi.fn(),
   setIsIPhoneDuo: vi.fn(),
-  updateContentInsets: vi.fn(),
+  setNativeBarsSupported: vi.fn(),
+  updateContentViewInsets: vi.fn(),
   storeIsIPhoneDuo: false,
   insetsRefreshToken: 0,
 }));
@@ -19,7 +20,8 @@ vi.mock('@/store/themeStore', () => ({
       updateSafeAreaInsets: h.updateInsets,
       updateScreenCornerRadius: h.updateCornerRadius,
       setIsIPhoneDuo: h.setIsIPhoneDuo,
-      updateContentInsets: h.updateContentInsets,
+      setNativeBarsSupported: h.setNativeBarsSupported,
+      updateContentViewInsets: h.updateContentViewInsets,
       insetsRefreshToken: h.insetsRefreshToken,
     }),
     {
@@ -44,7 +46,8 @@ afterEach(() => {
   cleanup();
   h.getInsets.mockReset();
   h.setIsIPhoneDuo.mockClear();
-  h.updateContentInsets.mockClear();
+  h.setNativeBarsSupported.mockClear();
+  h.updateContentViewInsets.mockClear();
   h.storeIsIPhoneDuo = false;
   h.insetsRefreshToken = 0;
 });
@@ -62,6 +65,18 @@ describe('useSafeAreaInsets iPhone Duo flag', () => {
     h.getInsets.mockResolvedValue(zero);
     renderHook(() => useSafeAreaInsets());
     await waitFor(() => expect(h.setIsIPhoneDuo).toHaveBeenLastCalledWith(false));
+  });
+
+  it('records whether the bridge can place items in the native bars', async () => {
+    h.getInsets.mockResolvedValue({ ...zero, isIPhoneDuo: true, nativeBarsSupported: true });
+    renderHook(() => useSafeAreaInsets());
+    await waitFor(() => expect(h.setNativeBarsSupported).toHaveBeenLastCalledWith(true));
+  });
+
+  it('records no native bar support when the bridge omits it (older runtime or SDK)', async () => {
+    h.getInsets.mockResolvedValue({ ...zero, isIPhoneDuo: true });
+    renderHook(() => useSafeAreaInsets());
+    await waitFor(() => expect(h.setNativeBarsSupported).toHaveBeenLastCalledWith(false));
   });
 
   it('refetches on resize only on the Duo', async () => {
@@ -90,14 +105,14 @@ describe('useSafeAreaInsets content insets', () => {
     });
     renderHook(() => useSafeAreaInsets());
     await waitFor(() =>
-      expect(h.updateContentInsets).toHaveBeenLastCalledWith({ top: 59, bottom: 82 }),
+      expect(h.updateContentViewInsets).toHaveBeenLastCalledWith({ top: 59, bottom: 82 }),
     );
   });
 
   it('clears the content insets when the bridge does not report them', async () => {
     h.getInsets.mockResolvedValue(zero);
     renderHook(() => useSafeAreaInsets());
-    await waitFor(() => expect(h.updateContentInsets).toHaveBeenLastCalledWith(null));
+    await waitFor(() => expect(h.updateContentViewInsets).toHaveBeenLastCalledWith(null));
   });
 });
 

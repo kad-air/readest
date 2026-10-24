@@ -71,6 +71,7 @@ const scenarios = [
     theme: {
       ...base,
       isIPhoneDuo: true,
+      nativeBarsSupported: true,
       systemUIVisible: false,
       safeAreaInsets: { top: 0, right: 84, bottom: 0, left: 0 },
     },
@@ -81,6 +82,7 @@ const scenarios = [
     theme: {
       ...base,
       isIPhoneDuo: true,
+      nativeBarsSupported: true,
       systemUIAlwaysHidden: true,
       safeAreaInsets: noInsets,
     },

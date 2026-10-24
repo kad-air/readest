@@ -2,16 +2,24 @@ import type { NativeBarItem } from '@/utils/bridge';
 
 export interface NativeBarFlags {
   isIPhoneDuo: boolean;
+  /** The bridge can place items in the system's bars (and has not failed to). */
+  nativeBarsSupported: boolean;
   systemUIVisible: boolean;
   systemUIAlwaysHidden: boolean;
 }
 
 /**
- * The Duo's side strip exists only while the status bar is shown, so the
- * native bar items follow it.
+ * Whether the native bars own the toolbar buttons right now. The HTML buttons
+ * hide only under this flag, so it requires the bridge to have reported support
+ * (iPhone Duo, iOS 27.1, 27.1 SDK) and the Duo's strip to exist, which it does
+ * only while the status bar is shown.
  */
 export const isNativeBarsActive = (flags: NativeBarFlags, isIOSApp: boolean): boolean =>
-  isIOSApp && flags.isIPhoneDuo && flags.systemUIVisible && !flags.systemUIAlwaysHidden;
+  isIOSApp &&
+  flags.isIPhoneDuo &&
+  flags.nativeBarsSupported &&
+  flags.systemUIVisible &&
+  !flags.systemUIAlwaysHidden;
 
 export type NativeBarSpecItem = NativeBarItem & { onTap: () => void };
 export interface NativeBarSpec {
@@ -38,8 +46,7 @@ export const nativeBarItemsEqual = (a: NativeBarItem[], b: NativeBarItem[]): boo
       x.symbol === y.symbol &&
       x.placement === y.placement &&
       x.selected === y.selected &&
-      x.priority === y.priority &&
-      x.badge === y.badge
+      x.priority === y.priority
     );
   });
 
@@ -52,11 +59,9 @@ export const NATIVE_BAR_SYMBOLS: Record<string, string> = {
   // Not the ellipsis: Apple reserves it for the system overflow menu.
   viewMenu: 'square.grid.2x2',
   settingsMenu: 'line.3.horizontal',
-  back: 'chevron.left',
   // reader header
   closeBook: 'xmark',
   library: 'chevron.left',
-  sidebar: 'sidebar.left',
   bookmark: 'bookmark',
   bookmarkFilled: 'bookmark.fill',
   translation: 'character.book.closed',

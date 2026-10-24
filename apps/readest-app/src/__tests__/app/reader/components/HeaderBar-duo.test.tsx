@@ -21,6 +21,7 @@ const h = vi.hoisted(() => ({
     systemUIAlwaysHidden: false,
     statusBarHeight: 0,
     isIPhoneDuo: true,
+    nativeBarsSupported: true,
   },
   viewSettings: {
     enableAnnotationQuickActions: true,
@@ -140,6 +141,7 @@ beforeEach(() => {
     systemUIAlwaysHidden: false,
     statusBarHeight: 0,
     isIPhoneDuo: true,
+    nativeBarsSupported: true,
   };
   h.viewSettings = { enableAnnotationQuickActions: true, annotationQuickAction: null };
   h.hoveredBookKey = 'book-1';

@@ -15,8 +15,9 @@ export const useSafeAreaInsets = () => {
     updateSafeAreaInsets,
     updateScreenCornerRadius,
     setIsIPhoneDuo,
+    setNativeBarsSupported,
     recordStatusBarHiddenInsets,
-    updateContentInsets,
+    updateContentViewInsets,
     insetsRefreshToken,
   } = useThemeStore();
 
@@ -64,7 +65,8 @@ export const useSafeAreaInsets = () => {
           updateInsets(insets);
           updateScreenCornerRadius(Math.round(response.bottomCornerRadius ?? 0));
           setIsIPhoneDuo(!!response.isIPhoneDuo);
-          updateContentInsets(
+          setNativeBarsSupported(!!response.nativeBarsSupported);
+          updateContentViewInsets(
             response.contentTop !== undefined && response.contentBottom !== undefined
               ? {
                   top: Math.round(response.contentTop),

@@ -23,7 +23,7 @@ const MobileFooterBar: React.FC<FooterBarChildProps> = ({
   const sliderHeight = useResponsiveSize(28);
   const marginIconSize = useResponsiveSize(20);
   const isIPhoneDuo = useThemeStore((s) => s.isIPhoneDuo);
-  const contentInsets = useThemeStore((s) => s.contentInsets);
+  const contentViewInsets = useThemeStore((s) => s.contentViewInsets);
   const nativeBarsActive = useNativeBarsActive();
   // iPhone Duo's status-bar strip reports as a large left/right inset (#6307);
   // the bases match the panels' px-4 and the bar's px-8.
@@ -32,7 +32,7 @@ const MobileFooterBar: React.FC<FooterBarChildProps> = ({
   // The tab buttons live in the Duo's native bar, so the panels sit directly
   // above it (or the home indicator) instead of above the HTML navigation bar.
   const bottomOffset = nativeBarsActive
-    ? `${contentInsets?.bottom ?? gridInsets.bottom}px`
+    ? `${contentViewInsets?.bottom ?? gridInsets.bottom}px`
     : isMobile
       ? `${gridInsets.bottom * 0.33 + 64}px`
       : '64px';

@@ -4,11 +4,14 @@ import type { NativeBarSpec } from '@/utils/nativeBar';
 
 const h = vi.hoisted(() => ({
   appService: { isIOSApp: true } as { isIOSApp: boolean } | null,
-  theme: { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false } as Record<
-    string,
-    unknown
-  >,
+  theme: {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  } as Record<string, unknown>,
   requestInsetsRefresh: vi.fn(),
+  setNativeBarsSupported: vi.fn(),
   setItems: vi.fn(),
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
@@ -17,8 +20,11 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/context/EnvContext', () => ({ useEnv: () => ({ appService: h.appService }) }));
 vi.mock('@/store/themeStore', () => ({
-  useThemeStore: (selector: (s: typeof h.theme) => unknown) =>
-    selector({ ...h.theme, requestInsetsRefresh: h.requestInsetsRefresh }),
+  useThemeStore: Object.assign(
+    (selector: (s: typeof h.theme) => unknown) =>
+      selector({ ...h.theme, requestInsetsRefresh: h.requestInsetsRefresh }),
+    { getState: () => ({ setNativeBarsSupported: h.setNativeBarsSupported }) },
+  ),
 }));
 vi.mock('@/utils/bridge', () => ({
   setNativeBarItems: h.setItems,
@@ -29,8 +35,14 @@ import { useNativeBar } from '@/hooks/useNativeBar';
 
 beforeEach(() => {
   h.appService = { isIOSApp: true };
-  h.theme = { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false };
+  h.theme = {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  };
   h.requestInsetsRefresh.mockReset();
+  h.setNativeBarsSupported.mockReset();
   h.setItems.mockReset();
   h.setItems.mockResolvedValue({ success: true });
   h.subscribe.mockReset();
@@ -223,5 +235,26 @@ describe('useNativeBar insets refresh', () => {
     const { unmount } = renderHook(() => useNativeBar(makeSpec()));
     unmount();
     expect(h.requestInsetsRefresh).not.toHaveBeenCalled();
+  });
+});
+
+describe('useNativeBar when the bridge cannot place the items', () => {
+  it('withdraws native bar support on a failed send, so the HTML buttons come back', async () => {
+    h.setItems.mockResolvedValue({ success: false, error: 'Native bars need iOS 27.1' });
+    renderHook(() => useNativeBar(makeSpec()));
+    await waitFor(() => expect(h.setNativeBarsSupported).toHaveBeenCalledWith(false));
+    expect(h.requestInsetsRefresh).not.toHaveBeenCalled();
+  });
+
+  it('withdraws support when the command throws', async () => {
+    h.setItems.mockRejectedValue(new Error('plugin not found'));
+    renderHook(() => useNativeBar(makeSpec()));
+    await waitFor(() => expect(h.setNativeBarsSupported).toHaveBeenCalledWith(false));
+  });
+
+  it('never calls the bridge before the bridge has reported support', () => {
+    h.theme = { ...h.theme, nativeBarsSupported: false };
+    renderHook(() => useNativeBar(makeSpec()));
+    expect(h.setItems).not.toHaveBeenCalled();
   });
 });

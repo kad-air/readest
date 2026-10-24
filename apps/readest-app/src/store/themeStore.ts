@@ -69,9 +69,15 @@ interface ThemeState {
   // iPhone Duo, whose vertical status strip is a large left/right inset (#6307).
   // Every horizontal-inset rule is gated on it, so no other device changes.
   isIPhoneDuo: boolean;
+  /**
+   * The native bridge can place toolbar items in the system's bars (iPhone Duo
+   * on iOS 27.1, built with the 27.1 SDK) and has not failed to. HTML toolbar
+   * buttons hide only while this is true.
+   */
+  nativeBarsSupported: boolean;
   // Safe-area insets of the content view, larger than the window's while a
   // native bar is present on the Duo; null when the bridge does not report them.
-  contentInsets: { top: number; bottom: number } | null;
+  contentViewInsets: { top: number; bottom: number } | null;
   // Bumped when a native bar appears or goes: the window's and the content
   // view's insets change with it, so the Duo refetches them (useSafeAreaInsets).
   insetsRefreshToken: number;
@@ -101,7 +107,8 @@ interface ThemeState {
   recordStatusBarHiddenInsets: (insets: Insets) => void;
   updateScreenCornerRadius: (radius: number) => void;
   setIsIPhoneDuo: (isIPhoneDuo: boolean) => void;
-  updateContentInsets: (insets: { top: number; bottom: number } | null) => void;
+  setNativeBarsSupported: (supported: boolean) => void;
+  updateContentViewInsets: (insets: { top: number; bottom: number } | null) => void;
   requestInsetsRefresh: () => void;
 }
 
@@ -319,7 +326,8 @@ export const useThemeStore = create<ThemeState>((set, get) => {
     statusBarHiddenInsets: null,
     screenCornerRadius: 0,
     isIPhoneDuo: false,
-    contentInsets: null,
+    nativeBarsSupported: false,
+    contentViewInsets: null,
     insetsRefreshToken: 0,
     isRoundedWindow: true,
     showSystemUI: () => set({ systemUIVisible: true }),
@@ -454,10 +462,13 @@ export const useThemeStore = create<ThemeState>((set, get) => {
     setIsIPhoneDuo: (isIPhoneDuo) => {
       if (get().isIPhoneDuo !== isIPhoneDuo) set({ isIPhoneDuo });
     },
-    updateContentInsets: (insets) => {
-      const prev = get().contentInsets;
+    setNativeBarsSupported: (supported) => {
+      if (get().nativeBarsSupported !== supported) set({ nativeBarsSupported: supported });
+    },
+    updateContentViewInsets: (insets) => {
+      const prev = get().contentViewInsets;
       if (prev?.top === insets?.top && prev?.bottom === insets?.bottom) return;
-      set({ contentInsets: insets });
+      set({ contentViewInsets: insets });
     },
     requestInsetsRefresh: () =>
       set((state) => ({ insetsRefreshToken: state.insetsRefreshToken + 1 })),

@@ -10,6 +10,7 @@ const h = vi.hoisted(() => ({
   requestInsetsRefresh: vi.fn(),
   theme: {
     isIPhoneDuo: true,
+    nativeBarsSupported: true,
     systemUIVisible: true,
     systemUIAlwaysHidden: false,
   } as Record<string, unknown>,
@@ -46,7 +47,12 @@ const sent = () => h.setItems.mock.calls.at(-1)![0] as Array<{ id: string }>;
 
 beforeEach(() => {
   h.hoveredBookKey = '';
-  h.theme = { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false };
+  h.theme = {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  };
   h.setItems.mockReset();
   h.setItems.mockResolvedValue({ success: true });
   h.subscribe.mockReset();

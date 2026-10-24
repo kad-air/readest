@@ -51,7 +51,7 @@ vi.mock('@/utils/event', () => ({ eventDispatcher: { dispatchSync: () => false }
 vi.mock('@/app/reader/components/StatusInfo.tsx', () => ({ default: () => null }));
 
 const footerStyle = (isIPhoneDuo: boolean, chromeGridInsets?: Insets) => {
-  useThemeStore.setState({ isIPhoneDuo });
+  useThemeStore.setState({ isIPhoneDuo, nativeBarsSupported: isIPhoneDuo });
   // A 40px left side strip on top of a 16px page margin.
   const { container } = render(
     <ProgressBar
@@ -69,6 +69,7 @@ const footerStyle = (isIPhoneDuo: boolean, chromeGridInsets?: Insets) => {
 beforeEach(() =>
   useThemeStore.setState({
     isIPhoneDuo: false,
+    nativeBarsSupported: false,
     systemUIVisible: false,
     systemUIAlwaysHidden: false,
   }),

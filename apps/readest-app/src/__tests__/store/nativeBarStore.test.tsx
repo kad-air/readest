@@ -1,6 +1,9 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+const h = vi.hoisted(() => ({ active: true }));
+vi.mock('@/hooks/useNativeBar', () => ({ useNativeBarsActive: () => h.active }));
+
 import { useNativeBarSlice, useNativeBarStore } from '@/store/nativeBarStore';
 import type { NativeBarSpecItem } from '@/utils/nativeBar';
 
@@ -15,7 +18,10 @@ const item = (id: string, selected?: boolean, onTap = vi.fn()): NativeBarSpecIte
 
 const slices = () => useNativeBarStore.getState().slices;
 
-beforeEach(() => useNativeBarStore.setState({ slices: {} }));
+beforeEach(() => {
+  h.active = true;
+  useNativeBarStore.setState({ slices: {} });
+});
 afterEach(() => cleanup());
 
 describe('nativeBarStore', () => {
@@ -106,5 +112,25 @@ describe('useNativeBarSlice', () => {
     act(() => slices()['a:bookmark']!.items[0]!.onTap());
     expect(first).not.toHaveBeenCalled();
     expect(second).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('useNativeBarSlice while the native bars are inactive', () => {
+  it('registers nothing, so other platforms never touch the store', () => {
+    h.active = false;
+    renderHook(() => useNativeBarSlice('a:library', 0, [item('library')]));
+    expect(slices()).toEqual({});
+  });
+
+  it('registers the slice once the bars become active, and drops it again when they go', () => {
+    h.active = false;
+    const { rerender } = renderHook(() => useNativeBarSlice('a:library', 0, [item('library')]));
+    expect(slices()).toEqual({});
+    h.active = true;
+    rerender();
+    expect(Object.keys(slices())).toEqual(['a:library']);
+    h.active = false;
+    rerender();
+    expect(slices()).toEqual({});
   });
 });

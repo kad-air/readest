@@ -68,9 +68,9 @@ class BarItemArgs: Decodable {
   let symbol: String
   let placement: String
   let selected: Bool?
-  /// "high" | "low"; anything else is the standard priority.
+  /// "high" keeps the item out of the overflow menu longest; anything else is
+  /// the standard priority.
   let priority: String?
-  let badge: Int?
 }
 
 class SetBarItemsRequestArgs: Decodable {
@@ -1553,6 +1553,7 @@ class NativeBridgePlugin: Plugin {
           "contentBottom": contentInsets.bottom,
           "bottomCornerRadius": bottomCornerRadius,
           "isIPhoneDuo": NativeBridgePlugin.isIPhoneDuo,
+          "nativeBarsSupported": NativeBridgePlugin.nativeBarsSupported,
           "statusBarHidden": self.contentViewController(in: window)?.prefersStatusBarHidden ?? false
         ])
       } else {
@@ -1567,7 +1568,7 @@ class NativeBridgePlugin: Plugin {
     }
   }
 
-  // ── iPhone Duo vertical bars (spike) ─────────────────────────────────
+  // ── iPhone Duo vertical bars ─────────────────────────────────────────
   // Apple lays bars out in the Duo's side strip only when they belong to a
   // UINavigationController or UITabBarController; HTML bars inside the webview
   // never join it. This wraps tao's root view controller in a navigation
@@ -1575,6 +1576,24 @@ class NativeBridgePlugin: Plugin {
   // toolbar with UIBarButtonItems, so the system places them: vertically on
   // the Duo's outer display and inner-landscape pose, horizontally elsewhere.
   private var barItemIds: [Int: String] = [:]
+
+  // UIBarButtonItem.visibilityPriority arrived with the iOS 27.1 SDK (Swift
+  // 6.4, Xcode 27.1). An older toolchain still builds this file; it reports the
+  // bars as unsupported and the web layer keeps its HTML buttons.
+  #if compiler(>=6.4)
+    private static let builtWithVerticalBarSDK = true
+  #else
+    private static let builtWithVerticalBarSDK = false
+  #endif
+
+  /// Reported to JS up front, so the HTML buttons are only hidden where the
+  /// native bars can actually take over: iPhone Duo, iOS 27.1, built with the
+  /// 27.1 SDK.
+  private static var nativeBarsSupported: Bool {
+    guard isIPhoneDuo, builtWithVerticalBarSDK else { return false }
+    if #available(iOS 27.1, *) { return true }
+    return false
+  }
 
   /// tao's view controller, which owns the webview and the status bar
   /// preference, whether or not it has been wrapped in a navigation controller.
@@ -1588,8 +1607,7 @@ class NativeBridgePlugin: Plugin {
   /// Only iPhone Duo on iOS 27.1 gets the wrapper: elsewhere the window keeps
   /// tao's controller as its root and no code path below runs.
   private func installNavigationControllerIfNeeded() -> UINavigationController? {
-    guard NativeBridgePlugin.isIPhoneDuo else { return nil }
-    guard #available(iOS 27.1, *) else { return nil }
+    guard NativeBridgePlugin.nativeBarsSupported else { return nil }
     guard let window = appWindow() else { return nil }
     if let nav = window.rootViewController as? UINavigationController { return nav }
     guard let root = window.rootViewController else { return nil }
@@ -1608,18 +1626,16 @@ class NativeBridgePlugin: Plugin {
   @objc public func set_bar_items(_ invoke: Invoke) throws {
     let args = try invoke.parseArgs(SetBarItemsRequestArgs.self)
     DispatchQueue.main.async {
-      // Everything below uses iOS 16–27.1 bar APIs; the wrapper is only ever
-      // installed under the same condition.
-      guard #available(iOS 27.1, *) else {
-        invoke.resolve(["success": false, "error": "Native bars need iOS 27.1"])
-        return
-      }
-      guard let nav = self.installNavigationControllerIfNeeded(),
+      // The item-group APIs below are iOS 16+; the availability check keeps the
+      // compiler happy on the plugin's older deployment target, and support
+      // (Duo, 27.1 runtime and SDK) is what actually decides.
+      guard #available(iOS 27.1, *), NativeBridgePlugin.nativeBarsSupported,
+        let nav = self.installNavigationControllerIfNeeded(),
         let root = nav.viewControllers.first
       else {
         invoke.resolve([
           "success": false,
-          "error": "Native bars are only installed on iPhone Duo with iOS 27.1",
+          "error": "Native bars need an iPhone Duo on iOS 27.1 and a build from the 27.1 SDK",
         ])
         return
       }
@@ -1637,12 +1653,11 @@ class NativeBridgePlugin: Plugin {
         button.accessibilityLabel = item.title
         button.tag = index
         button.isSelected = item.selected ?? false
-        switch item.priority {
-        case "high": button.visibilityPriority = .high
-        case "low": button.visibilityPriority = .low
-        default: button.visibilityPriority = .standard
-        }
-        button.badge = item.badge.map { UIBarButtonItem.Badge.count($0) }
+        #if compiler(>=6.4)
+          if #available(iOS 27.1, *) {
+            button.visibilityPriority = item.priority == "high" ? .high : .standard
+          }
+        #endif
         self.barItemIds[index] = item.id
         switch item.placement {
         case "leading": leading.append(button)
@@ -1662,19 +1677,10 @@ class NativeBridgePlugin: Plugin {
       nav.setNavigationBarHidden(leading.isEmpty && trailing.isEmpty, animated: false)
       nav.setToolbarHidden(bottom.isEmpty, animated: false)
       nav.view.layoutIfNeeded()
-      let verticalBar = "preferredVerticalBarBehavior=\(root.preferredVerticalBarBehavior.rawValue)"
-      let details: [String: String] = [
-        "windowSafeArea": NSCoder.string(for: nav.view.window?.safeAreaInsets ?? .zero),
-        "contentSafeArea": NSCoder.string(for: root.view.safeAreaInsets),
-        "contentFrame": NSCoder.string(for: root.view.frame),
-        "navBarFrame": NSCoder.string(for: nav.navigationBar.frame),
-        "navBarHidden": String(nav.isNavigationBarHidden),
-        "toolbarFrame": NSCoder.string(for: nav.toolbar.frame),
-        "toolbarHidden": String(nav.isToolbarHidden),
-        "verticalBar": verticalBar,
-      ]
-      logger.log("Duo bars: set \(args.items.count) items \(String(describing: details), privacy: .public)")
-      invoke.resolve(["success": true, "details": details])
+      logger.log(
+        "Duo bars: set \(args.items.count) items; window safe area \(NSCoder.string(for: nav.view.window?.safeAreaInsets ?? .zero), privacy: .public), content safe area \(NSCoder.string(for: root.view.safeAreaInsets), privacy: .public)"
+      )
+      invoke.resolve(["success": true])
     }
   }
 

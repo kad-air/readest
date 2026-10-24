@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { create } from 'zustand';
+import { useNativeBarsActive } from '@/hooks/useNativeBar';
 import { NativeBarSpecItem, toNativeBarItems } from '@/utils/nativeBar';
 
 export interface NativeBarSlice {
@@ -16,8 +17,8 @@ interface NativeBarState {
 /**
  * The reader's native bar items, registered by the component that owns each
  * button (keyed `${bookKey}:${name}`) and composed into one bar by
- * ReaderNativeBar. Registering is inert off the Duo: only the composer talks to
- * the bridge.
+ * ReaderNativeBar. While the native bars are inactive nothing is registered,
+ * so other platforms pay nothing for it.
  */
 export const useNativeBarStore = create<NativeBarState>((set) => ({
   slices: {},
@@ -32,15 +33,17 @@ export const useNativeBarStore = create<NativeBarState>((set) => ({
 }));
 
 /**
- * Keep `items` registered under `key` while mounted. Renders rebuild the items
- * and their handlers every time, so the slice is only rewritten when the items
- * change by value; a tap goes to the handler of the latest render.
+ * Keep `items` registered under `key` while mounted and the native bars are
+ * active. Renders rebuild the items and their handlers every time, so the slice
+ * is only rewritten when the items change by value; a tap goes to the handler
+ * of the latest render.
  */
 export const useNativeBarSlice = (
   key: string | null,
   order: number,
-  items: NativeBarSpecItem[] | null,
+  wanted: NativeBarSpecItem[] | null,
 ): void => {
+  const items = useNativeBarsActive() ? wanted : null;
   const latest = useRef(items);
   latest.current = items;
   const signature = items ? JSON.stringify(toNativeBarItems({ items })) : null;

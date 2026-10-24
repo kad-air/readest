@@ -137,6 +137,39 @@ both use `appWindow()` (the webview's own window), and `get_safe_area_insets` re
   mount, resize and orientation change, since folding between two landscape displays fires no
   orientation event.
 
+### Native bars (iPhone Duo only)
+
+Apple places an app's toolbar and navigation buttons in the Duo's side strip only when they
+belong to a `UINavigationController` or `UITabBarController`; HTML bars never join it. So on
+the Duo the native bridge wraps tao's root view controller in a navigation controller and
+`setNativeBarItems` (`set_bar_items`) puts the toolbar buttons there; the HTML twins hide.
+Everything is behind one flag, `isNativeBarsActive` (`utils/nativeBar.ts`, read through
+`useNativeBarsActive`):
+
+- `isIPhoneDuo` and the iOS app, as for every other Duo rule;
+- `nativeBarsSupported`, which the bridge reports in `get_safe_area_insets` (iPhone Duo, iOS
+  27.1, built with the 27.1 SDK) and which a failed `set_bar_items` withdraws, so a Duo where
+  the native path does not work keeps its HTML buttons instead of having none;
+- `systemUIVisible && !systemUIAlwaysHidden`, because the strip exists only with the status
+  bar; sheets that hide it (sidebar, notebook, settings) take the bars with them.
+
+Off the Duo the flag is false, no slice is registered, the bridge is never called, and every
+component renders exactly as on main; keep a parity test with the flag false when touching
+one of them. Which insets apply while the bars are up:
+
+- **HTML header and footer** keep the cell's live insets (`chromeInsets`), as before; on the
+  cover display the reader header collapses to zero height once every button has moved.
+- **Reading page** keeps the status-bar-hidden insets (above), so it still does not
+  re-paginate; its header line (`SectionInfo`) and footer line (`ProgressBar`) take
+  `chromeGridInsets` as well and clear the strip from those while the bars are up.
+- **Footer panels** (`MobileFooterBar`) anchor at `themeStore.contentViewInsets.bottom`, the
+  content view's safe area, which exceeds the window's by the native toolbar's height on the
+  inner display in portrait (the toolbar is a floating pill there). The bridge reports it as
+  `contentTop`/`contentBottom`; it equals the window's insets everywhere else.
+- **Inset re-read.** A native bar appearing or going moves the insets without any window
+  event, so `useNativeBar` bumps `themeStore.insetsRefreshToken` after a successful send and
+  the first `useSafeAreaInsets` instance to see it refetches (Duo only).
+
 ### Passing `gridInsets`
 
 When creating overlay components (image viewers, table viewers, zoom controls, etc.), always pass `gridInsets` as a prop so they can position their controls correctly:

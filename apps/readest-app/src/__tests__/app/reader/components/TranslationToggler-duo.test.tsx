@@ -3,7 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   appService: { isIOSApp: true, isMobile: true, isMobileApp: true },
-  theme: { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false },
+  theme: {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  },
   viewSettings: { translationEnabled: false, translateTargetLang: 'en' },
   available: true,
   saveViewSettings: vi.fn(),
@@ -36,7 +41,12 @@ import { useNativeBarStore } from '@/store/nativeBarStore';
 const slice = () => useNativeBarStore.getState().slices['book-1:translation'];
 
 beforeEach(() => {
-  h.theme = { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false };
+  h.theme = {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  };
   h.viewSettings = { translationEnabled: false, translateTargetLang: 'en' };
   h.available = true;
   h.saveViewSettings.mockReset();

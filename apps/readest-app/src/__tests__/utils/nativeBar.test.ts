@@ -8,7 +8,12 @@ import {
 } from '@/utils/nativeBar';
 import type { NativeBarItem } from '@/utils/bridge';
 
-const on = { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false };
+const on = {
+  isIPhoneDuo: true,
+  nativeBarsSupported: true,
+  systemUIVisible: true,
+  systemUIAlwaysHidden: false,
+};
 
 describe('isNativeBarsActive', () => {
   it('is true on the iOS Duo app with the status bar shown', () => {
@@ -27,6 +32,10 @@ describe('isNativeBarsActive', () => {
     expect(isNativeBarsActive({ ...on, isIPhoneDuo: false }, true)).toBe(false);
   });
 
+  it('is false until the bridge reports native bar support, so the HTML buttons stay', () => {
+    expect(isNativeBarsActive({ ...on, nativeBarsSupported: false }, true)).toBe(false);
+  });
+
   it('is false outside the iOS app', () => {
     expect(isNativeBarsActive(on, false)).toBe(false);
   });
@@ -43,7 +52,6 @@ describe('toNativeBarItems', () => {
           placement: 'leading',
           selected: undefined,
           priority: 'high',
-          badge: undefined,
           onTap: () => {},
         },
         {
@@ -52,7 +60,6 @@ describe('toNativeBarItems', () => {
           symbol: 'headphones',
           placement: 'bottom',
           selected: true,
-          badge: 3,
           onTap: () => {},
         },
       ],
@@ -66,7 +73,6 @@ describe('toNativeBarItems', () => {
         symbol: 'headphones',
         placement: 'bottom',
         selected: true,
-        badge: 3,
       },
     ]);
     expect(Object.keys(items[0]!)).not.toContain('onTap');
@@ -97,9 +103,7 @@ describe('nativeBarItemsEqual', () => {
     expect(nativeBarItemsEqual([{ ...a, selected: true }], [{ ...a, selected: false }])).toBe(
       false,
     );
-    expect(nativeBarItemsEqual([a], [{ ...a, priority: 'low' }])).toBe(false);
-    expect(nativeBarItemsEqual([a], [{ ...a, badge: 1 }])).toBe(false);
-    expect(nativeBarItemsEqual([{ ...a, badge: 1 }], [{ ...a, badge: 2 }])).toBe(false);
+    expect(nativeBarItemsEqual([a], [{ ...a, priority: 'high' }])).toBe(false);
   });
 });
 
@@ -109,9 +113,7 @@ describe('NATIVE_BAR_SYMBOLS', () => {
     select: 'checkmark.circle',
     viewMenu: 'square.grid.2x2',
     settingsMenu: 'line.3.horizontal',
-    back: 'chevron.left',
     library: 'chevron.left',
-    sidebar: 'sidebar.left',
     bookmark: 'bookmark',
     bookmarkFilled: 'bookmark.fill',
     translation: 'character.book.closed',

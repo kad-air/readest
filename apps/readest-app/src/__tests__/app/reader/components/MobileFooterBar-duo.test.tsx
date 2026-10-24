@@ -5,9 +5,10 @@ const h = vi.hoisted(() => ({
   appService: { isIOSApp: true, isMobile: true },
   theme: {
     isIPhoneDuo: true,
+    nativeBarsSupported: true,
     systemUIVisible: true,
     systemUIAlwaysHidden: false,
-    contentInsets: { top: 82, bottom: 82 } as { top: number; bottom: number } | null,
+    contentViewInsets: { top: 82, bottom: 82 } as { top: number; bottom: number } | null,
   },
   panels: {} as Record<string, string>,
 }));
@@ -68,9 +69,10 @@ const renderBar = (bottom = 34) =>
 beforeEach(() => {
   h.theme = {
     isIPhoneDuo: true,
+    nativeBarsSupported: true,
     systemUIVisible: true,
     systemUIAlwaysHidden: false,
-    contentInsets: { top: 82, bottom: 82 },
+    contentViewInsets: { top: 82, bottom: 82 },
   };
   h.panels = {};
 });
@@ -84,13 +86,13 @@ describe('MobileFooterBar panel offset', () => {
   });
 
   it('falls back to the grid bottom inset when the content insets are unknown', () => {
-    h.theme = { ...h.theme, contentInsets: null };
+    h.theme = { ...h.theme, contentViewInsets: null };
     renderBar(34);
     expect(h.panels['color']).toBe('34px');
   });
 
   it('follows a content inset of 0 (strip poses without a home indicator)', () => {
-    h.theme = { ...h.theme, contentInsets: { top: 0, bottom: 0 } };
+    h.theme = { ...h.theme, contentViewInsets: { top: 0, bottom: 0 } };
     renderBar();
     expect(h.panels['font']).toBe('0px');
   });

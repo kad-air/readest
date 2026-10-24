@@ -90,6 +90,11 @@ export interface GetSafeAreaInsetsResponse {
   /** iOS: whether the root view controller currently hides the status bar. */
   statusBarHidden?: boolean;
   /**
+   * iOS: whether `setNativeBarItems` can place items in the system's bars here
+   * (iPhone Duo on iOS 27.1, built with the 27.1 SDK). Absent elsewhere.
+   */
+  nativeBarsSupported?: boolean;
+  /**
    * iOS: the content view's safe-area insets, which exceed the window's when a
    * native bar is present (iPhone Duo).
    */
@@ -802,14 +807,12 @@ export interface NativeBarItem {
   placement: 'leading' | 'trailing' | 'bottom';
   selected?: boolean;
   /** Overflow priority: 'high' items are the last to move into the overflow menu. */
-  priority?: 'high' | 'low';
-  badge?: number;
+  priority?: 'high';
 }
 
 export interface SetBarItemsResponse {
   success: boolean;
   error?: string;
-  details?: Record<string, string>;
 }
 
 export async function setNativeBarItems(items: NativeBarItem[]): Promise<SetBarItemsResponse> {

@@ -3,7 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const h = vi.hoisted(() => ({
   appService: { isIOSApp: true, isMobile: true, isAndroidApp: false },
-  theme: { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false },
+  theme: {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  },
   sidebar: { isSideBarVisible: false, isSideBarPinned: false },
   ttsEnabled: false,
 }));
@@ -54,7 +59,12 @@ const renderBar = (actionTab = '') => {
 const footer = () => useNativeBarStore.getState().slices['book-1:footer'];
 
 beforeEach(() => {
-  h.theme = { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: false };
+  h.theme = {
+    isIPhoneDuo: true,
+    nativeBarsSupported: true,
+    systemUIVisible: true,
+    systemUIAlwaysHidden: false,
+  };
   h.sidebar = { isSideBarVisible: false, isSideBarPinned: false };
   h.ttsEnabled = false;
   useNativeBarStore.setState({ slices: {} });
@@ -158,14 +168,32 @@ describe('NavigationBar with the Duo native bars active', () => {
 
 describe('NavigationBar with the native bars inactive', () => {
   it.each([
-    ['off the Duo', { isIPhoneDuo: false, systemUIVisible: true, systemUIAlwaysHidden: false }],
+    [
+      'off the Duo',
+      {
+        isIPhoneDuo: false,
+        nativeBarsSupported: true,
+        systemUIVisible: true,
+        systemUIAlwaysHidden: false,
+      },
+    ],
     [
       'status bar hidden',
-      { isIPhoneDuo: true, systemUIVisible: false, systemUIAlwaysHidden: false },
+      {
+        isIPhoneDuo: true,
+        nativeBarsSupported: true,
+        systemUIVisible: false,
+        systemUIAlwaysHidden: false,
+      },
     ],
     [
       'status bar always hidden',
-      { isIPhoneDuo: true, systemUIVisible: true, systemUIAlwaysHidden: true },
+      {
+        isIPhoneDuo: true,
+        nativeBarsSupported: true,
+        systemUIVisible: true,
+        systemUIAlwaysHidden: true,
+      },
     ],
   ])('renders the five buttons as before (%s)', (_name, theme) => {
     h.theme = theme;
@@ -184,7 +212,12 @@ describe('NavigationBar with the native bars inactive', () => {
   });
 
   it('renders no TOC button when the sidebar is shown and pinned', () => {
-    h.theme = { isIPhoneDuo: false, systemUIVisible: true, systemUIAlwaysHidden: false };
+    h.theme = {
+      isIPhoneDuo: false,
+      nativeBarsSupported: true,
+      systemUIVisible: true,
+      systemUIAlwaysHidden: false,
+    };
     h.sidebar = { isSideBarVisible: true, isSideBarPinned: true };
     const { queryByLabelText } = renderBar();
     expect(queryByLabelText('Table of Contents')).toBeNull();

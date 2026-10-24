@@ -15,6 +15,7 @@ vi.mock('@/store/themeStore', () => ({
       systemUIAlwaysHidden: false,
       statusBarHeight: 0,
       isIPhoneDuo: h.isIPhoneDuo,
+      nativeBarsSupported: true,
     };
     return selector ? selector(state) : state;
   },
