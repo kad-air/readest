@@ -30,6 +30,9 @@ const h = vi.hoisted(() => ({
   setItems: vi.fn(),
   subscribe: vi.fn(),
   onGoToLibrary: vi.fn(),
+  onCloseBook: vi.fn(),
+  setHoveredBookKey: vi.fn(),
+  windowButtonsProps: null as Record<string, unknown> | null,
 }));
 
 vi.mock('@/context/EnvContext', () => ({
@@ -64,7 +67,7 @@ vi.mock('@/store/readerStore', () => ({
     hoveredBookKey: h.hoveredBookKey,
     getView: () => null,
     getViewSettings: () => h.viewSettings,
-    setHoveredBookKey: vi.fn(),
+    setHoveredBookKey: h.setHoveredBookKey,
   }),
 }));
 vi.mock('@/store/bookDataStore', () => ({
@@ -91,10 +94,17 @@ vi.mock('@/app/reader/components/ViewMenu', () => ({
   default: () => <div data-testid='view-menu' />,
 }));
 vi.mock('@/app/reader/components/annotator/QuickActionMenu', () => ({
-  default: () => <div data-testid='quick-action-menu' />,
+  default: ({ menuClassName }: { menuClassName?: string }) => (
+    <div data-testid='quick-action-menu' className={menuClassName} />
+  ),
 }));
 vi.mock('@/app/reader/components/SyncInfoDialog', () => ({ default: () => null }));
-vi.mock('@/components/WindowButtons', () => ({ default: () => null }));
+vi.mock('@/components/WindowButtons', () => ({
+  default: (props: Record<string, unknown>) => {
+    h.windowButtonsProps = props;
+    return null;
+  },
+}));
 vi.mock('@/components/ModalPortal', () => ({ default: () => null }));
 
 import HeaderBar from '@/app/reader/components/HeaderBar';
@@ -113,7 +123,7 @@ const renderHeader = () =>
         isHoveredAnim={false}
         gridInsets={insets}
         screenInsets={insets}
-        onCloseBook={vi.fn()}
+        onCloseBook={h.onCloseBook}
         onGoToLibrary={h.onGoToLibrary}
       />
     </DropdownProvider>,
@@ -134,6 +144,9 @@ beforeEach(() => {
   h.viewSettings = { enableAnnotationQuickActions: true, annotationQuickAction: null };
   h.hoveredBookKey = 'book-1';
   h.onGoToLibrary.mockReset();
+  h.onCloseBook.mockReset();
+  h.setHoveredBookKey.mockReset();
+  h.windowButtonsProps = null;
   h.setItems.mockReset();
   h.subscribe.mockReset();
   useNativeBarStore.setState({ slices: {} });
@@ -147,7 +160,12 @@ afterEach(() => {
 describe('HeaderBar with the Duo native bars active', () => {
   it('registers the library, quick action and view options slices', () => {
     renderHeader();
-    expect(sliceNames()).toEqual(['book-1:library', 'book-1:quickAction', 'book-1:viewOptions']);
+    expect(sliceNames()).toEqual([
+      'book-1:closeBook',
+      'book-1:library',
+      'book-1:quickAction',
+      'book-1:viewOptions',
+    ]);
 
     expect(slice('library')).toMatchObject({
       order: 0,
@@ -198,7 +216,7 @@ describe('HeaderBar with the Duo native bars active', () => {
   it('registers no quick action slice when quick actions are off', () => {
     h.viewSettings = { enableAnnotationQuickActions: false, annotationQuickAction: null };
     const { queryByLabelText } = renderHeader();
-    expect(sliceNames()).toEqual(['book-1:library', 'book-1:viewOptions']);
+    expect(sliceNames()).toEqual(['book-1:closeBook', 'book-1:library', 'book-1:viewOptions']);
     expect(queryByLabelText('Enable Quick Action on Selection')).toBeNull();
   });
 
@@ -234,6 +252,39 @@ describe('HeaderBar with the Duo native bars active', () => {
     act(() => slice('quickAction')!.items[0]!.onTap());
     expect(queryByTestId('quick-action-menu')).not.toBeNull();
     expect(queryByTestId('view-menu')).toBeNull();
+    // Positioned like the other menus: a relative, centred menu on a zero-size
+    // toggle at the top of the screen opens half off-screen.
+    expect(queryByTestId('quick-action-menu')?.className ?? '').not.toContain('relative');
+  });
+
+  it('registers Close Book ahead of Go to Library in the leading group', () => {
+    renderHeader();
+    expect(sliceNames()).toContain('book-1:closeBook');
+    expect(slice('closeBook')!.order).toBeLessThan(slice('library')!.order);
+    expect(slice('closeBook')!.items[0]).toMatchObject({
+      id: 'closeBook',
+      title: 'Close Book',
+      symbol: 'xmark',
+      placement: 'leading',
+      priority: 'high',
+    });
+    act(() => slice('closeBook')!.items[0]!.onTap());
+    expect(h.setHoveredBookKey).toHaveBeenCalledWith(null);
+    expect(h.onCloseBook).toHaveBeenCalledWith('book-1');
+  });
+
+  it('hides the HTML Close Book button', () => {
+    renderHeader();
+    expect(h.windowButtonsProps?.['showClose']).toBe(false);
+  });
+
+  it('moves the Quick Action menu to the end cluster so it opens beside the strip', () => {
+    const { getByLabelText } = renderHeader();
+    const toggle = getByLabelText('Enable Quick Action on Selection');
+    expect(toggle.closest('.header-tools-end')).not.toBeNull();
+    const details = toggle.parentElement?.querySelector('details');
+    expect(details?.className).toContain('dropdown-end');
+    expect(details?.className).not.toContain('dropdown-center');
   });
 
   it('keeps the book title in the header', () => {

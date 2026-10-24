@@ -29,6 +29,7 @@ const h = vi.hoisted(() => ({
   hoveredBookKey: 'book-1' as string | null,
   setItems: vi.fn(),
   subscribe: vi.fn(),
+  windowButtonsProps: null as Record<string, unknown> | null,
   onGoToLibrary: vi.fn(),
 }));
 
@@ -94,7 +95,12 @@ vi.mock('@/app/reader/components/annotator/QuickActionMenu', () => ({
   default: () => <div data-testid='quick-action-menu' />,
 }));
 vi.mock('@/app/reader/components/SyncInfoDialog', () => ({ default: () => null }));
-vi.mock('@/components/WindowButtons', () => ({ default: () => null }));
+vi.mock('@/components/WindowButtons', () => ({
+  default: (props: Record<string, unknown>) => {
+    h.windowButtonsProps = props;
+    return null;
+  },
+}));
 vi.mock('@/components/ModalPortal', () => ({ default: () => null }));
 
 import HeaderBar from '@/app/reader/components/HeaderBar';
@@ -175,6 +181,14 @@ describe.each(scenarios)('HeaderBar parity on %s', (_name, appService, top, marg
   it('keeps the header where it was', () => {
     const { getByRole } = renderHeader(insets);
     expect((getByRole('banner') as HTMLElement).style.marginTop).toBe(`${marginTop}px`);
+  });
+
+  it('keeps the Close Book button and the Quick Action menu in the start cluster', () => {
+    const { getByLabelText } = renderHeader(insets);
+    expect(h.windowButtonsProps?.['showClose']).not.toBe(false);
+    const toggle = getByLabelText('Enable Quick Action on Selection');
+    expect(toggle.closest('.header-tools-end')).toBeNull();
+    expect(toggle.parentElement?.querySelector('details')?.className).toContain('dropdown-center');
   });
 
   it('keeps the title', () => {

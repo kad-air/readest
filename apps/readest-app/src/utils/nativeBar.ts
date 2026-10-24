@@ -53,6 +53,7 @@ export const NATIVE_BAR_SYMBOLS: Record<string, string> = {
   settingsMenu: 'line.3.horizontal',
   back: 'chevron.left',
   // reader header
+  closeBook: 'xmark',
   library: 'chevron.left',
   sidebar: 'sidebar.left',
   bookmark: 'bookmark',
