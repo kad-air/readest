@@ -1604,6 +1604,31 @@ class NativeBridgePlugin: Plugin {
     return window.rootViewController
   }
 
+  /// The wrapper forwards every appearance and rotation preference to tao's
+  /// controller, so wrapping changes only who owns the bars: the status bar
+  /// still follows tao's prefersStatusBarHidden whether or not a bar shows,
+  /// orientation locks keep intersecting with tao's mask, and the home
+  /// indicator and deferred screen edges stay as the webview asks. One
+  /// controller is ever on the stack, so the back-swipe gesture is disabled
+  /// and the reader's edge swipes reach the webview.
+  private final class DuoBarsNavigationController: UINavigationController {
+    override var childForStatusBarHidden: UIViewController? { topViewController }
+    override var childForStatusBarStyle: UIViewController? { topViewController }
+    override var childForHomeIndicatorAutoHidden: UIViewController? { topViewController }
+    override var childForScreenEdgesDeferringSystemGestures: UIViewController? { topViewController }
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+      topViewController?.supportedInterfaceOrientations ?? super.supportedInterfaceOrientations
+    }
+    override var preferredInterfaceOrientationForPresentation: UIInterfaceOrientation {
+      topViewController?.preferredInterfaceOrientationForPresentation
+        ?? super.preferredInterfaceOrientationForPresentation
+    }
+    override func viewDidLoad() {
+      super.viewDidLoad()
+      interactivePopGestureRecognizer?.isEnabled = false
+    }
+  }
+
   /// Only iPhone Duo on iOS 27.1 gets the wrapper: elsewhere the window keeps
   /// tao's controller as its root and no code path below runs.
   private func installNavigationControllerIfNeeded() -> UINavigationController? {
@@ -1615,7 +1640,7 @@ class NativeBridgePlugin: Plugin {
     // controller ... as a child") while the controller is still the window's
     // root, so detach it first.
     window.rootViewController = nil
-    let nav = UINavigationController(rootViewController: root)
+    let nav = DuoBarsNavigationController(rootViewController: root)
     nav.setNavigationBarHidden(true, animated: false)
     nav.setToolbarHidden(true, animated: false)
     window.rootViewController = nav

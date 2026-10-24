@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`MobileFooterBar DOM parity with main: 'Android' > renders the same markup as main (tab "") 1`] = `"<div data-panel="color" data-bottom="71.92px"></div><div data-panel="navigation" data-bottom="71.92px"></div><div data-panel="font" data-bottom="71.92px"></div><div data-nav=""></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'Android' > renders the same markup as main (tab "color") 1`] = `"<div data-panel="color" data-bottom="71.92px"></div><div data-panel="navigation" data-bottom="71.92px"></div><div data-panel="font" data-bottom="71.92px"></div><div data-nav="color"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'Android' > renders the same markup as main (tab "font") 1`] = `"<div data-panel="color" data-bottom="71.92px"></div><div data-panel="navigation" data-bottom="71.92px"></div><div data-panel="font" data-bottom="71.92px"></div><div data-nav="font"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'Android' > renders the same markup as main (tab "progress") 1`] = `"<div data-panel="color" data-bottom="71.92px"></div><div data-panel="navigation" data-bottom="71.92px"></div><div data-panel="font" data-bottom="71.92px"></div><div data-nav="progress"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'Duo, status bar hidden' > renders the same markup as main (tab "") 1`] = `"<div data-panel="color" data-bottom="75.22px"></div><div data-panel="navigation" data-bottom="75.22px"></div><div data-panel="font" data-bottom="75.22px"></div><div data-nav=""></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'Duo, status bar hidden' > renders the same markup as main (tab "color") 1`] = `"<div data-panel="color" data-bottom="75.22px"></div><div data-panel="navigation" data-bottom="75.22px"></div><div data-panel="font" data-bottom="75.22px"></div><div data-nav="color"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'Duo, status bar hidden' > renders the same markup as main (tab "font") 1`] = `"<div data-panel="color" data-bottom="75.22px"></div><div data-panel="navigation" data-bottom="75.22px"></div><div data-panel="font" data-bottom="75.22px"></div><div data-nav="font"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'Duo, status bar hidden' > renders the same markup as main (tab "progress") 1`] = `"<div data-panel="color" data-bottom="75.22px"></div><div data-panel="navigation" data-bottom="75.22px"></div><div data-panel="font" data-bottom="75.22px"></div><div data-nav="progress"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'iPhone' > renders the same markup as main (tab "") 1`] = `"<div data-panel="color" data-bottom="75.22px"></div><div data-panel="navigation" data-bottom="75.22px"></div><div data-panel="font" data-bottom="75.22px"></div><div data-nav=""></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'iPhone' > renders the same markup as main (tab "color") 1`] = `"<div data-panel="color" data-bottom="75.22px"></div><div data-panel="navigation" data-bottom="75.22px"></div><div data-panel="font" data-bottom="75.22px"></div><div data-nav="color"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'iPhone' > renders the same markup as main (tab "font") 1`] = `"<div data-panel="color" data-bottom="75.22px"></div><div data-panel="navigation" data-bottom="75.22px"></div><div data-panel="font" data-bottom="75.22px"></div><div data-nav="font"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'iPhone' > renders the same markup as main (tab "progress") 1`] = `"<div data-panel="color" data-bottom="75.22px"></div><div data-panel="navigation" data-bottom="75.22px"></div><div data-panel="font" data-bottom="75.22px"></div><div data-nav="progress"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'tablet (no bottom inset)' > renders the same markup as main (tab "") 1`] = `"<div data-panel="color" data-bottom="64px"></div><div data-panel="navigation" data-bottom="64px"></div><div data-panel="font" data-bottom="64px"></div><div data-nav=""></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'tablet (no bottom inset)' > renders the same markup as main (tab "color") 1`] = `"<div data-panel="color" data-bottom="64px"></div><div data-panel="navigation" data-bottom="64px"></div><div data-panel="font" data-bottom="64px"></div><div data-nav="color"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'tablet (no bottom inset)' > renders the same markup as main (tab "font") 1`] = `"<div data-panel="color" data-bottom="64px"></div><div data-panel="navigation" data-bottom="64px"></div><div data-panel="font" data-bottom="64px"></div><div data-nav="font"></div>"`;
+
+exports[`MobileFooterBar DOM parity with main: 'tablet (no bottom inset)' > renders the same markup as main (tab "progress") 1`] = `"<div data-panel="color" data-bottom="64px"></div><div data-panel="navigation" data-bottom="64px"></div><div data-panel="font" data-bottom="64px"></div><div data-nav="progress"></div>"`;
