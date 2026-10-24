@@ -197,7 +197,7 @@ describe('HeaderBar with the Duo native bars active', () => {
         {
           id: 'viewOptions',
           title: 'View Options',
-          symbol: 'ellipsis.circle',
+          symbol: 'line.3.horizontal',
           placement: 'trailing',
         },
       ],
@@ -285,6 +285,19 @@ describe('HeaderBar with the Duo native bars active', () => {
     const details = toggle.parentElement?.querySelector('details');
     expect(details?.className).toContain('dropdown-end');
     expect(details?.className).not.toContain('dropdown-center');
+  });
+
+  it('mirrors the HTML header: Go to Library only on windows 640 and wider', () => {
+    // The HTML button is `hidden sm:flex`, so the cover display (466 wide) shows
+    // Close Book alone and never both ways back to the library.
+    vi.stubGlobal('innerWidth', 466);
+    const narrow = renderHeader();
+    expect(sliceNames()).not.toContain('book-1:library');
+    expect(sliceNames()).toContain('book-1:closeBook');
+    narrow.unmount();
+    vi.stubGlobal('innerWidth', 669);
+    renderHeader();
+    expect(sliceNames()).toContain('book-1:library');
   });
 
   it('keeps the book title in the header', () => {

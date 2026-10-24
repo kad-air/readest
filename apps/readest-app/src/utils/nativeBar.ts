@@ -49,7 +49,8 @@ export const NATIVE_BAR_SYMBOLS: Record<string, string> = {
   import: 'plus',
   select: 'checkmark.circle',
   selectAll: 'checklist',
-  viewMenu: 'ellipsis.circle',
+  // Not the ellipsis: Apple reserves it for the system overflow menu.
+  viewMenu: 'square.grid.2x2',
   settingsMenu: 'line.3.horizontal',
   back: 'chevron.left',
   // reader header
@@ -61,7 +62,7 @@ export const NATIVE_BAR_SYMBOLS: Record<string, string> = {
   translation: 'character.book.closed',
   quickAction: 'highlighter',
   notebook: 'note.text',
-  viewOptions: 'ellipsis.circle',
+  viewOptions: 'line.3.horizontal',
   // reader footer
   toc: 'list.bullet',
   color: 'sun.max',

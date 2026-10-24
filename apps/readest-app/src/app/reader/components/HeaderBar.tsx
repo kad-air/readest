@@ -133,16 +133,24 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
       },
     },
   ]);
-  useNativeBarSlice(`${bookKey}:library`, 0, [
-    {
-      id: 'library',
-      title: _('Go to Library'),
-      symbol: NATIVE_BAR_SYMBOLS['library']!,
-      placement: 'leading',
-      priority: 'high',
-      onTap: onGoToLibrary,
-    },
-  ]);
+  // The HTML Go to Library button is `hidden sm:flex`: phones get Close Book
+  // alone, so the native bar offers the same on windows narrower than 640.
+  useNativeBarSlice(
+    `${bookKey}:library`,
+    0,
+    window.innerWidth < 640
+      ? null
+      : [
+          {
+            id: 'library',
+            title: _('Go to Library'),
+            symbol: NATIVE_BAR_SYMBOLS['library']!,
+            placement: 'leading',
+            priority: 'high',
+            onTap: onGoToLibrary,
+          },
+        ],
+  );
   useNativeBarSlice(
     `${bookKey}:quickAction`,
     4,

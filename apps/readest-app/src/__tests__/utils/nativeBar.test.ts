@@ -107,7 +107,7 @@ describe('NATIVE_BAR_SYMBOLS', () => {
   const expected: Record<string, string> = {
     import: 'plus',
     select: 'checkmark.circle',
-    viewMenu: 'ellipsis.circle',
+    viewMenu: 'square.grid.2x2',
     settingsMenu: 'line.3.horizontal',
     back: 'chevron.left',
     library: 'chevron.left',
@@ -117,7 +117,7 @@ describe('NATIVE_BAR_SYMBOLS', () => {
     translation: 'character.book.closed',
     quickAction: 'highlighter',
     notebook: 'note.text',
-    viewOptions: 'ellipsis.circle',
+    viewOptions: 'line.3.horizontal',
     toc: 'list.bullet',
     color: 'sun.max',
     progress: 'slider.horizontal.3',

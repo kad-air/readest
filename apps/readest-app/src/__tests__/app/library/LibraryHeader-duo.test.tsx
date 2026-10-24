@@ -116,7 +116,7 @@ describe('LibraryHeader on the iPhone Duo with native bars active', () => {
     expect(h.setItems).toHaveBeenCalledTimes(1);
     expect(sentItems()).toEqual([
       { id: 'import', title: 'Import Books', symbol: 'plus', placement: 'trailing' },
-      { id: 'viewMenu', title: 'View Menu', symbol: 'ellipsis.circle', placement: 'trailing' },
+      { id: 'viewMenu', title: 'View Menu', symbol: 'square.grid.2x2', placement: 'trailing' },
       {
         id: 'settingsMenu',
         title: 'Settings Menu',
